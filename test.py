@@ -1,6 +1,6 @@
-from lambda_function import DynaMagic
 from modules.schema import Schema
 from moto import mock_dynamodb2
+from lambda_function import DynaMagic
 import unittest
 
 
