@@ -47,7 +47,3 @@ class DynaMagic():
         else:
             return {"status_code": 400, 
             "message": f"Table {create_table['TableDescription']['TableName']} did not create, please try again"}
-    
-
-    def update_table(self, )
-
