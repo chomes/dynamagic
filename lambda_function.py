@@ -41,7 +41,6 @@ class DynaMagic():
         WaiterConfig={"Delay": 5, "MaxAttempts": 5})
         tables = self.client.list_tables()["TableNames"]
         if create_table["TableDescription"]["TableName"] in tables:
-            print(f"Table {create_table['TableDescription']['TableName']} has been created!")
             return {"status_code": 200, 
             "message": f"Table {create_table['TableDescription']['TableName']} has been created!"}
         else:
