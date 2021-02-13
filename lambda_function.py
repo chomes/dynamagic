@@ -108,3 +108,14 @@ class DynaMagic():
         else:
             return {"status_code": 200,
             "message": "The items were added successfully!"}
+
+    # Function to update values of items in the database
+    # Requires validation that the item exists
+    # Make sure it doesn't update data that already exists
+    # Confirm the data has been changed
+
+
+    # Function for deleting an item from the database
+    # Check item exists on the database already
+    # Delete item
+    # Confirm item no longer exists on the database
