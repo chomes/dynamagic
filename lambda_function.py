@@ -7,10 +7,11 @@ class DynaMagic():
         self.table = table
         self.client: botostubs.DynamoDB = boto3.client("dynamodb", region_name="eu-west-2")
 
-    def create_table(self) -> bool:
-        """
-        Creates a new table in DynamoDB for users to input their data into
-        Return: prints a response and returns boolean
+    def create_table(self) -> dict:
+        """Creates a table for DynamoDB 
+
+        Returns:
+            dict: [description]
         """
         validate_existing_table = self.client.list_tables()["TableNames"]
         if not self.table in validate_existing_table:
@@ -46,3 +47,5 @@ class DynaMagic():
         else:
             return {"status_code": 400, 
             "message": f"Table {create_table['TableDescription']['TableName']} did not create, please try again"}
+    
+    
