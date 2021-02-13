@@ -108,7 +108,3 @@ class DynaMagic():
         else:
             return {"status_code": 200,
             "message": "The items were added successfully!"}
-
-
-
-        
