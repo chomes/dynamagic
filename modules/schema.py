@@ -4,8 +4,10 @@ class Schema:
         self.valid_schema: dict = {"customerId": str, "name": str, "address": str, "age": str, "car": str}
     
     def keys_validator(self) -> dict:
-        """
-        Validates the keys we expect to have in a form to ensure someone doesn't inject wrong data into the table.
+        """Ensures the keys in the dictionary are what they should be.
+
+        Returns:
+            dict: Response code and message stating it's correct or invalid.
         """
         missing_keys = list()
         valid_keys = {"customerId", "name", "address", "age", "car"}
@@ -34,8 +36,10 @@ class Schema:
             return {"status_code": 200, "message": "Keys Validated"}
 
     def data_entegrity(self) -> dict:
-        """
-        Validates that the user passes is correct to the standard we require in the schema
+        """Ensures that the data is what data type it's specified to be and that certain information is correct
+
+        Returns:
+            dict: Response code saying it's correct or invalid
         """
         try:
             if len(self.data["customerId"]) > 10:

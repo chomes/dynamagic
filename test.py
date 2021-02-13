@@ -23,7 +23,7 @@ class TestSchema(unittest.TestCase):
     def test_correct_keys(self):
         schema = Schema(data={"customerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(schema.keys_validator()["status_code"], 200)
+        self.assertEqual(schema.keys_validator(), {"status_code": 200, "message": "Keys Validated"})
     
     def test_too_many_keys(self):
         schema = Schema(data={"customerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
@@ -36,22 +36,25 @@ class TestSchema(unittest.TestCase):
 
     def test_id_too_short(self):
         schema = Schema(data={"customerId": "1482", "name": "James Joseph", "address": "Jeff Bezos Candy land road"})
-        self.assertEqual(schema.data_entegrity()["status_code"], 400)
+        self.assertEqual(schema.data_entegrity(), 
+        {"status_code": 400, "message": "The customer ID is shorter then 10 digits long, please try again"})
     
     def test_id_too_long(self):
         schema = Schema(data={"customerId": "1482328791288", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(schema.data_entegrity()["status_code"], 400)
+        self.assertEqual(schema.data_entegrity(), 
+        {"status_code": 400, "message": "The customer ID is longer then 10 digits long, please try again"})
     
     def test_id_is_int(self):
         schema = Schema(data={"customerId": 1482328790, "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(schema.data_entegrity()["status_code"], 400)
+        self.assertEqual(schema.data_entegrity(),
+         {"status_code": 400, "message": "The customer ID cannot be an int, please make this a string"})
     
     def test_data_validation(self):
         schema = Schema(data={"customerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(schema.data_entegrity()["status_code"], 200)
+        self.assertEqual(schema.data_entegrity(), {"status_code": 200, "message": "Data has been validated"})
     
     def test_data_not_validated(self):
         schema = Schema(data={"customerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
