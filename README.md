@@ -21,10 +21,11 @@ We recommend python 3.8 and above but it **should** run on python 3.6 at a minim
 ## Required to run (That's not built in)
 
 * boto3
+* time
 
 ## Required to test
 
 * moto - http://docs.getmoto.org/en/latest/
 * boto3
 * unittest
-
+* time
