@@ -1,7 +1,7 @@
 class Schema:
     def __init__(self, data: dict):
         self.data = data
-        self.valid_schema: dict = {"customerId": str, "name": str, "address": str, "age": str, "car": str}
+        self.valid_schema: dict = {"CustomerId": str, "name": str, "address": str, "age": str, "car": str}
     
     def keys_validator(self) -> dict:
         """Ensures the keys in the dictionary are what they should be.
@@ -10,7 +10,7 @@ class Schema:
             dict: Response code and message stating it's correct or invalid.
         """
         missing_keys = list()
-        valid_keys = {"customerId", "name", "address", "age", "car"}
+        valid_keys = {"CustomerId", "name", "address", "age", "car"}
         for valid_key in valid_keys:
             if valid_key in self.data.keys():
                 pass
@@ -42,13 +42,19 @@ class Schema:
             dict: Response code saying it's correct or invalid
         """
         try:
-            if len(self.data["customerId"]) > 10:
+            if len(self.data["CustomerId"]) > 10:
                 return {"status_code": 400, "message": "The customer ID is longer then 10 digits long, please try again"}
-            elif len(self.data["customerId"]) < 10:
+            elif len(self.data["CustomerId"]) < 10:
                 return {"status_code": 400, "message": "The customer ID is shorter then 10 digits long, please try again"}
         except TypeError:
             return {"status_code": 400, "message": "The customer ID cannot be an int, please make this a string"}
         
+        try:
+            int(self.data["CustomerId"])
+        except ValueError:
+            return {"status_code": 400, "message": "The CustomerId is not a number, please check this and make sure the data is correct"}
+
+
         invalid_types = list()
         for key in self.data.keys():
             if isinstance(self.data[key], self.valid_schema[key]):
