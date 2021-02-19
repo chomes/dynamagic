@@ -25,7 +25,33 @@ class TestDynamoDb(unittest.TestCase):
         self.assertEqual(dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"}), {"status_code": 200,
             "message": "The items were added successfully!"})
-
+                
+    @mock_dynamodb2
+    def test_updating_item(self):
+        dynamo = DynaMagic("test_table")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.update_item({"CustomerId": "1482328791", "age": "42", "car": "Blue Mercedes"}), 
+        {"status_code": 200, "message": "Updated the items successfully"})
+    
+    @mock_dynamodb2
+    def test_invalid_item(self):
+        dynamo = DynaMagic("test_table")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.update_item({"CustomerId": "4241848170", "age": "42", "car": "Blue Mercedes"}), 
+        {"status_code": 400, "message": "Failed to retrieve the item, please check the key and try again"})
+    
+    @mock_dynamodb2
+    def test_updating_same_data(self):
+        dynamo = DynaMagic("test_table")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.update_item(data={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32"}), {"status_code": 400, "message": "There is no new data to process, please provide new information and try again"})
 
 
 class TestSchema(unittest.TestCase):
@@ -34,7 +60,15 @@ class TestSchema(unittest.TestCase):
         schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.keys_validator(), {"status_code": 200, "message": "Keys Validated"})
-    
+
+    def test_modular_keys(self):
+        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42"})
+        self.assertEqual(schema.keys_validator(full_validate=False), {"status_code": 200, "message": "Keys Validated"})
+
+    def test_invalid_modular_keys(self):
+        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42", "comics": ["Flash", "batman"]})
+        self.assertEqual(schema.keys_validator(full_validate=False)["status_code"], 400 )
+
     def test_too_many_keys(self):
         schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda", "favourite_comics": ["Batman", "Flash", "Green Lantern"]})
