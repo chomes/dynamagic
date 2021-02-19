@@ -6,6 +6,10 @@ class DynaMagic():
     def __init__(self, table: str):
         self.table = table
         self.client = boto3.client("dynamodb", region_name="eu-west-2")
+        self.expression_mapping: dict = {"name": {"expression": "#N", "attribute_name": ":n"},
+        "address": {"expression": "#AD", "attribute_name": ":ad"},
+        "age": {"expression": "#AG", "attribute_name": ":ag"},
+        "car": {"expression": "#C", "attribute_name": ":c"}} 
 
     def create_table(self) -> dict:
         """Creates a table for DynamoDB 
@@ -109,13 +113,96 @@ class DynaMagic():
             return {"status_code": 200,
             "message": "The items were added successfully!"}
 
-    # Function to update values of items in the database
-    # Requires validation that the item exists
-    # Make sure it doesn't update data that already exists
-    # Confirm the data has been changed
 
+    def update_item(self, data: dict) -> dict:
+        """Update an item on the database that already exists.  Must provide data based on the modules/schema for this to be successful.
+        The method will check that the keys exist in the database and if not will fail, it will then also check that any of the attributes of the item exist in the schema.
+        If not it will then fail.  It will then check if the data is actually new or existing, if anything is existing it will skip out that data and only update information based on new data.
+
+        Args:
+            data (dict): Users must provide a minimum of two bits of information
+            * CustomerId - the unique ID to search for information
+            * Attribute - Any attribute that you want to update.
+
+        Returns:
+            dict: Result of the action being successful or unsuccessful.
+        """
+        
+        customer_id = data.pop("CustomerId")
+        old_item = self.client.get_item(
+            TableName=self.table,
+            Key={
+                "CustomerId": {"S": customer_id}
+                }
+        )
+        
+        try:
+            old_item = old_item["Item"]
+        except KeyError:
+            return {"status_code": 400, "message": "Failed to retrieve the item, please check the key and try again"}
+        
+        schema = Schema(data)
+        invalid_keys = list()
+
+        for key in data.keys():
+            if key in schema.valid_schema:
+                pass
+            else:
+                invalid_keys.append(key)
+        
+        if len(invalid_keys) > 0:
+            return {"status_code": 400, "message": "You have attributes in your data that are not part of the schema, please check your information and try again"}
+
+        for same_data in data:
+            if data[same_data] == old_item[same_data]:
+                data.pop(same_data)
+            else:
+                pass
+        
+        if len(data) == 0:
+            return {"status_code": 400, "message": "There is no new data to process, please provide new information and try again"}
+        
+        update_expression = str()
+        for key in data.keys():
+            if update_expression.startswith("SET"):
+                pass
+            else:
+                update_expression = f"SET {self.expression_mapping[key]['expression']} = {self.expression_mapping[key]['attribute_name']}"
+            
+            if update_expression.endswith(self.expression_mapping[key]["attribute_name"]):
+                continue
+            else:
+                update_expression += f", {self.expression_mapping[key]['expression']} = {self.expression_mapping[key]['attribute_name']}"
+        
+        expression_attribute_names = {f"{self.expression_mapping[key]['expression']}": key for key in data.keys()}
+        expression_attribute_values = {f"{self.expression_mapping[key]['attribute_name']}": {"S": data[key]} for key in data.keys()}
+
+        response = self.client.update_item(
+            TableName=self.table,
+            Key={
+                "CustomerId": {"S": customer_id}
+            },
+            UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values,
+            ReturnValues="UPDATED_NEW"
+        )
+        validate_response = dict()
+        for key, value in data.items():
+            validate_response.update({key: {"S": value}})
+        try:
+            if response["Attributes"] == validate_response:
+                return {"status_code": 200, "message": "Updated the items successfully"}
+            else:
+                return {"status_code": 400, "message": "Failed to update the items, please try again"}
+        except KeyError:
+            return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
+            
 
     # Function for deleting an item from the database
-    # Check item exists on the database already
-    # Delete item
-    # Confirm item no longer exists on the database
+        # Check item exists on the database already
+        # Delete item
+        # Confirm item no longer exists on the database
+    # Method for searching all items on the table
+    # Method for getting an item from the database
+    # Method for querying items based on field names
