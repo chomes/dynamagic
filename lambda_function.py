@@ -127,6 +127,13 @@ class DynaMagic():
         Returns:
             dict: Result of the action being successful or unsuccessful.
         """
+        schema = Schema(data)
+        data_validator = schema.data_entegrity()
+        if data_validator["status_code"] == 200:
+            pass
+        else:
+            return {"status_code": 400, 
+            "message": f"The data you provided is not correct based on our schema, please check the data and try again valid formts {schema.valid_schema}"}
         
         customer_id = data.pop("CustomerId")
         old_item = self.client.get_item(
@@ -141,23 +148,13 @@ class DynaMagic():
         except KeyError:
             return {"status_code": 400, "message": "Failed to retrieve the item, please check the key and try again"}
         
-        schema = Schema(data)
-        invalid_keys = list()
-
-        for key in data.keys():
-            if key in schema.valid_schema:
-                pass
-            else:
-                invalid_keys.append(key)
+        validating_keys = schema.keys_validator(full_validate=False)
+        if validating_keys["status_code"] != 200:
+            return validating_keys
         
-        if len(invalid_keys) > 0:
-            return {"status_code": 400, "message": "You have attributes in your data that are not part of the schema, please check your information and try again"}
-
-        for same_data in data:
-            if data[same_data] == old_item[same_data]:
-                data.pop(same_data)
-            else:
-                pass
+        duplicate_data_keys = [same_data for same_data in data.keys() if data[same_data] == old_item[same_data]["S"]]
+        for duplicate_data in duplicate_data_keys:
+            data.pop(duplicate_data)
         
         if len(data) == 0:
             return {"status_code": 400, "message": "There is no new data to process, please provide new information and try again"}
@@ -194,7 +191,7 @@ class DynaMagic():
             if response["Attributes"] == validate_response:
                 return {"status_code": 200, "message": "Updated the items successfully"}
             else:
-                return {"status_code": 400, "message": "Failed to update the items, please try again"}
+                return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
         except KeyError:
             return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
             
