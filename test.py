@@ -1,6 +1,7 @@
 from modules.schema import Schema
 from moto import mock_dynamodb2
 from lambda_function import DynaMagic
+from typing import List
 import unittest
 
 
@@ -8,19 +9,30 @@ class TestDynamoDb(unittest.TestCase):
     
     @mock_dynamodb2
     def test_create_table(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         self.assertEqual(dynamo.create_table(), {"status_code": 200, 
             "message": "Table test_table has been created!"})
     
     @mock_dynamodb2
     def test_creating_duplicate_table(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         self.assertEqual(dynamo.create_table(), {"status_code": 400, "message": "Table test_table already exists, not creating"})
     
     @mock_dynamodb2
+    def test_table_exists(self):
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
+        dynamo.create_table()
+        self.assertEqual(dynamo.validate_table_exists(), {"status_code": 200, "message": "This table exists"})
+    
+    @mock_dynamodb2
+    def test_table_is_invalid(self):
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
+        self.assertEqual(dynamo.validate_table_exists(), {"status_code": 400, "message": "The table doesn't exist, please try again with the correct name"})
+
+    @mock_dynamodb2
     def test_adding_item(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         self.assertEqual(dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"}), {"status_code": 200,
@@ -28,7 +40,7 @@ class TestDynamoDb(unittest.TestCase):
                 
     @mock_dynamodb2
     def test_updating_item(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
@@ -37,7 +49,7 @@ class TestDynamoDb(unittest.TestCase):
     
     @mock_dynamodb2
     def test_invalid_item(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
@@ -46,7 +58,7 @@ class TestDynamoDb(unittest.TestCase):
     
     @mock_dynamodb2
     def test_updating_same_data(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
@@ -55,7 +67,7 @@ class TestDynamoDb(unittest.TestCase):
 
     @mock_dynamodb2
     def test_deleting_item(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
@@ -63,11 +75,25 @@ class TestDynamoDb(unittest.TestCase):
     
     @mock_dynamodb2
     def test_wrong_key_deleting_item(self):
-        dynamo = DynaMagic("test_table")
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(dynamo.delete_item(key="1482328800"), {"status_code": 400, "message": "The item does not exist, please check the ID and try again"})
+    
+    @mock_dynamodb2
+    def test_getting_table_items(self):
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        dynamo.add_item(new_item={"CustomerId": "1482324001", "name": "James Joseph", "address": "Oscar Wild landing view",
+    "age": "40", "car": "Blue BMW"})
+        self.assertEqual(dynamo.get_items(), 
+        [{"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"}, {"CustomerId": "1482324001", "name": "James Joseph", "address": "Oscar Wild landing view",
+    "age": "40", "car": "Blue BMW"}])
+
     
     
 class TestSchema(unittest.TestCase):

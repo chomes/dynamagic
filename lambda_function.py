@@ -1,12 +1,27 @@
 import boto3
+import botocore
 from modules.schema import Schema
+from typing import Dict, List
 from time import sleep
 
 class DynaMagic():
-    def __init__(self, table: str):
+    def __init__(self, table: str, region: str):
         self.table = table
-        self.client = boto3.client("dynamodb", region_name="eu-west-2")
-        
+        self.client = boto3.client("dynamodb", region_name=region)
+
+    def validate_table_exists(self) -> dict:
+        """Checks if table exists before proceeding with actions
+
+        Returns:
+            dict: status code and message if valid or not
+        """
+        try:
+            self.client.scan(TableName=self.table)
+            return {"status_code": 200, "message": "This table exists"}
+        except self.client.exceptions.ResourceNotFoundException:
+            return {"status_code": 400, "message": "The table doesn't exist, please try again with the correct name"}
+
+
     def create_table(self) -> dict:
         """Creates a table for DynamoDB 
 
@@ -41,7 +56,7 @@ class DynaMagic():
         BillingMode="PROVISIONED")
         self.client.get_waiter("table_exists").wait(TableName=self.table,
         WaiterConfig={"Delay": 5, "MaxAttempts": 5})
-        tables = self.client.list_tables()["TableNames"]
+        tables: dict = self.client.list_tables()["TableNames"]
         if create_table["TableDescription"]["TableName"] in tables:
             return {"status_code": 200, 
             "message": f"Table {create_table['TableDescription']['TableName']} has been created!"}
@@ -64,6 +79,10 @@ class DynaMagic():
         Returns:
             dict: Response code of the result of the action
         """
+        validate_table = self.validate_table_exists()
+        if validate_table["status_code"] == 400:
+            return validate_table
+        
         schema = Schema(data=new_item)
         key_validator = schema.keys_validator() 
         if key_validator["status_code"] == 400:
@@ -82,7 +101,7 @@ class DynaMagic():
             Item=validated_data
         )
         sleep(1)
-        confirm_item = self.client.get_item(TableName=self.table,
+        confirm_item: dict = self.client.get_item(TableName=self.table,
         Key={
             "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: new_item["CustomerId"]}
         })
@@ -121,6 +140,10 @@ class DynaMagic():
         Returns:
             dict: Result of the action being successful or unsuccessful.
         """
+        validate_table = self.validate_table_exists()
+        if validate_table["status_code"] == 400:
+            return validate_table
+
         schema = Schema(data)
         data_validator = schema.data_entegrity()
         if data_validator["status_code"] == 200:
@@ -129,7 +152,7 @@ class DynaMagic():
             return data_validator
         
         customer_id = data.pop("CustomerId")
-        old_item = self.client.get_item(
+        old_item: dict = self.client.get_item(
             TableName=self.table,
             Key={
                 "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: customer_id}
@@ -167,7 +190,7 @@ class DynaMagic():
         expression_attribute_names = {f"{schema.expression_mapping[key]['expression']}": key for key in data.keys()}
         expression_attribute_values = {f"{schema.expression_mapping[key]['attribute_name']}": {schema.valid_schema[key]["dynamo_type"]: data[key]} for key in data.keys()}
 
-        response = self.client.update_item(
+        response: dict = self.client.update_item(
             TableName=self.table,
             Key={
                 "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: customer_id}
@@ -196,6 +219,10 @@ class DynaMagic():
         Returns:
             dict: Message to confirm if the item was deleted or not
         """
+        validate_table = self.validate_table_exists()
+        if validate_table["status_code"] == 400:
+            return validate_table
+
         schema = Schema({"CustomerId": key})
         key_validation = schema.data_entegrity()
         if key_validation["status_code"] != 200:
@@ -214,7 +241,7 @@ class DynaMagic():
             "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
         })
 
-        delete_validation = self.client.get_item(TableName=self.table, Key={
+        delete_validation: dict = self.client.get_item(TableName=self.table, Key={
             "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
         })
 
@@ -225,7 +252,24 @@ class DynaMagic():
             return {"status_code": 200, "message": "The item has been deleted successfully"}
 
     
-    # Method for searching all items on the table
-        # Present the data in a more human readable way
+    def get_items(self) -> List[dict] or dict:
+        """Gets all items from the database, converts them from the DynamoDB format and sends it in a presentable format
+
+        Returns:
+            List[dict] or dict: Returns a list of dictionaries or a single dictionary if you received a error message
+        """
+        validate_table = self.validate_table_exists()
+        if validate_table["status_code"] == 400:
+            return validate_table
+        
+        schema = Schema()
+        fetched_items: list = self.client.scan(TableName=self.table)["Items"]
+        converted_items: List[dict] = list()
+        for item in fetched_items:
+            converted_items.append({key: value[schema.valid_schema[key]["dynamo_type"]] for key, value in item.items()})
+        
+        return converted_items
+
+        
     # Method for getting an item from the database
     # Method for querying items based on field names

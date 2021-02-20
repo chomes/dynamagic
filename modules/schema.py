@@ -1,4 +1,14 @@
 class Schema:
+    """The Schema module is designed to validate the data being put into the dynamodb database along allowing you to set mappings for the values
+    when adding and searching in the DB.  
+    The Schema has 4 attributes:
+    
+    self.data (dict, optional): Dictionary of information that includes the key and value of items being added to the database.
+    self.valid_schema (dict): This contains the Key names that should be used in the database along with the type of value that should be used and the dynamo type of value that,
+    should be used when using CRUD operations.
+    self.valid_keys (set): This is a set of key names that are valid to be used in the database.
+    self.expression_mapping (dict):  Used for updating items, this is expressions that are given for updating values to the DB
+    """
     def __init__(self, data: dict or None = None):
         self.data = data
         self.valid_schema: dict = {"CustomerId": {"type": str, "dynamo_type": "S"}, "name": {"type": str, "dynamo_type": "S"},
