@@ -196,10 +196,45 @@ class DynaMagic():
             return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
             
 
-    # Function for deleting an item from the database
-        # Check item exists on the database already
-        # Delete item
-        # Confirm item no longer exists on the database
+    def delete_item(self, key: str) -> dict:
+        """Delete an item from the database.  This will validate that the item doesn't exist before and after.
+
+        Args:
+            key (str): Provide the key for the table to find the item
+
+        Returns:
+            dict: Message to confirm if the item was deleted or not
+        """
+        schema = Schema({"CustomerId": key})
+        key_validation = schema.data_entegrity()
+        if key_validation["status_code"] != 200:
+            return key_validation
+
+        item_validation = self.client.get_item(TableName=self.table, Key={
+            "CustomerId": {"S": key}
+        })
+        
+        try:
+            item_validation["Item"] 
+        except KeyError:
+            return {"status_code": 400, "message": "The item does not exist, please check the ID and try again"}
+        
+        self.client.delete_item(TableName=self.table, Key={
+            "CustomerId": {"S": key}
+        })
+
+        delete_validation = self.client.get_item(TableName=self.table, Key={
+            "CustomerId": {"S": key}
+        })
+
+        try:
+            delete_validation["Item"]
+            return {"status_code": 400, "message": "The item still exists and was not deleted successfully, please try again"}
+        except KeyError:
+            return {"status_code": 200, "message": "The item has been deleted successfully"}
+
+    
     # Method for searching all items on the table
+        # Present the data in a more human readable way
     # Method for getting an item from the database
     # Method for querying items based on field names

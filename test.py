@@ -53,7 +53,23 @@ class TestDynamoDb(unittest.TestCase):
         self.assertEqual(dynamo.update_item(data={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32"}), {"status_code": 400, "message": "There is no new data to process, please provide new information and try again"})
 
-
+    @mock_dynamodb2
+    def test_deleting_item(self):
+        dynamo = DynaMagic("test_table")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.delete_item(key="1482328791"), {"status_code": 200, "message": "The item has been deleted successfully"})
+    
+    @mock_dynamodb2
+    def test_wrong_key_deleting_item(self):
+        dynamo = DynaMagic("test_table")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.delete_item(key="1482328800"), {"status_code": 400, "message": "The item does not exist, please check the ID and try again"})
+    
+    
 class TestSchema(unittest.TestCase):
 
     def test_correct_keys(self):
@@ -95,7 +111,7 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(schema.data_entegrity(),
          {"status_code": 400, "message": "The customer ID cannot be an int, please make this a string"})
     
-    def test_id_is_number(self):
+    def test_id_is_not_number(self):
         schema = Schema(data={"CustomerId": "1482fallen", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity(), {"status_code": 400, "message": "The CustomerId is not a number, please check this and make sure the data is correct"})
