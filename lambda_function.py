@@ -6,17 +6,14 @@ class DynaMagic():
     def __init__(self, table: str):
         self.table = table
         self.client = boto3.client("dynamodb", region_name="eu-west-2")
-        self.expression_mapping: dict = {"name": {"expression": "#N", "attribute_name": ":n"},
-        "address": {"expression": "#AD", "attribute_name": ":ad"},
-        "age": {"expression": "#AG", "attribute_name": ":ag"},
-        "car": {"expression": "#C", "attribute_name": ":c"}} 
-
+        
     def create_table(self) -> dict:
         """Creates a table for DynamoDB 
 
         Returns:
             dict: Response code of the action
         """
+        schema = Schema()
         validate_existing_table = self.client.list_tables()["TableNames"]
         if not self.table in validate_existing_table:
             pass
@@ -32,7 +29,7 @@ class DynaMagic():
         AttributeDefinitions=[
             {
                 "AttributeName": "CustomerId",
-                "AttributeType": "S"
+                "AttributeType": schema.valid_schema["CustomerId"]["dynamo_type"]
             }
         ],
         KeySchema=[
@@ -76,13 +73,10 @@ class DynaMagic():
         if data_validator["status_code"] == 400:
             return data_validator
         
-        validated_data = {
-                "CustomerId": {"S": new_item["CustomerId"]},
-                "name": {"S": new_item["name"]},
-                "address": {"S": new_item["address"]},
-                "age": {"S": new_item["age"]},
-                "car": {"S": new_item["car"]}}
-        
+        validated_data = dict()
+        for key, value in new_item.items():
+            validated_data.update({key: {schema.valid_schema[key]["dynamo_type"]: value}})
+       
         self.client.put_item(
             TableName=self.table,
             Item=validated_data
@@ -90,7 +84,7 @@ class DynaMagic():
         sleep(1)
         confirm_item = self.client.get_item(TableName=self.table,
         Key={
-            "CustomerId": {"S": new_item["CustomerId"]}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: new_item["CustomerId"]}
         })
 
         try:
@@ -132,14 +126,13 @@ class DynaMagic():
         if data_validator["status_code"] == 200:
             pass
         else:
-            return {"status_code": 400, 
-            "message": f"The data you provided is not correct based on our schema, please check the data and try again valid formts {schema.valid_schema}"}
+            return data_validator
         
         customer_id = data.pop("CustomerId")
         old_item = self.client.get_item(
             TableName=self.table,
             Key={
-                "CustomerId": {"S": customer_id}
+                "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: customer_id}
                 }
         )
         
@@ -152,7 +145,7 @@ class DynaMagic():
         if validating_keys["status_code"] != 200:
             return validating_keys
         
-        duplicate_data_keys = [same_data for same_data in data.keys() if data[same_data] == old_item[same_data]["S"]]
+        duplicate_data_keys = [same_data for same_data in data.keys() if data[same_data] == old_item[same_data][schema.valid_schema[same_data]["dynamo_type"]]]
         for duplicate_data in duplicate_data_keys:
             data.pop(duplicate_data)
         
@@ -164,29 +157,27 @@ class DynaMagic():
             if update_expression.startswith("SET"):
                 pass
             else:
-                update_expression = f"SET {self.expression_mapping[key]['expression']} = {self.expression_mapping[key]['attribute_name']}"
+                update_expression = f"SET {schema.expression_mapping[key]['expression']} = {schema.expression_mapping[key]['attribute_name']}"
             
-            if update_expression.endswith(self.expression_mapping[key]["attribute_name"]):
+            if update_expression.endswith(schema.expression_mapping[key]["attribute_name"]):
                 continue
             else:
-                update_expression += f", {self.expression_mapping[key]['expression']} = {self.expression_mapping[key]['attribute_name']}"
+                update_expression += f", {schema.expression_mapping[key]['expression']} = {schema.expression_mapping[key]['attribute_name']}"
         
-        expression_attribute_names = {f"{self.expression_mapping[key]['expression']}": key for key in data.keys()}
-        expression_attribute_values = {f"{self.expression_mapping[key]['attribute_name']}": {"S": data[key]} for key in data.keys()}
+        expression_attribute_names = {f"{schema.expression_mapping[key]['expression']}": key for key in data.keys()}
+        expression_attribute_values = {f"{schema.expression_mapping[key]['attribute_name']}": {schema.valid_schema[key]["dynamo_type"]: data[key]} for key in data.keys()}
 
         response = self.client.update_item(
             TableName=self.table,
             Key={
-                "CustomerId": {"S": customer_id}
+                "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: customer_id}
             },
             UpdateExpression=update_expression,
             ExpressionAttributeNames=expression_attribute_names,
             ExpressionAttributeValues=expression_attribute_values,
             ReturnValues="UPDATED_NEW"
         )
-        validate_response = dict()
-        for key, value in data.items():
-            validate_response.update({key: {"S": value}})
+        validate_response = {key: {schema.valid_schema[key]["dynamo_type"]: value} for key, value in data.items()}
         try:
             if response["Attributes"] == validate_response:
                 return {"status_code": 200, "message": "Updated the items successfully"}
@@ -211,7 +202,7 @@ class DynaMagic():
             return key_validation
 
         item_validation = self.client.get_item(TableName=self.table, Key={
-            "CustomerId": {"S": key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
         })
         
         try:
@@ -220,11 +211,11 @@ class DynaMagic():
             return {"status_code": 400, "message": "The item does not exist, please check the ID and try again"}
         
         self.client.delete_item(TableName=self.table, Key={
-            "CustomerId": {"S": key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
         })
 
         delete_validation = self.client.get_item(TableName=self.table, Key={
-            "CustomerId": {"S": key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
         })
 
         try:

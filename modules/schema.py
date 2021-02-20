@@ -1,8 +1,13 @@
 class Schema:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict or None = None):
         self.data = data
-        self.valid_schema: dict = {"CustomerId": str, "name": str, "address": str, "age": str, "car": str}
+        self.valid_schema: dict = {"CustomerId": {"type": str, "dynamo_type": "S"}, "name": {"type": str, "dynamo_type": "S"},
+        "address": {"type": str, "dynamo_type": "S"},  "age": {"type": str, "dynamo_type": "S"}, "car": {"type": str, "dynamo_type": "S"}}
         self.valid_keys: set = {"CustomerId", "name", "address", "age", "car"}
+        self.expression_mapping: dict = {"name": {"expression": "#N", "attribute_name": ":n"},
+        "address": {"expression": "#AD", "attribute_name": ":ad"},
+        "age": {"expression": "#AG", "attribute_name": ":ag"},
+        "car": {"expression": "#C", "attribute_name": ":c"}} 
     
     def keys_validator(self, full_validate: bool = True) -> dict:
         """The method allows you to validate the keys that are parsed in to confirm that they are valid set by the schema.
@@ -64,7 +69,7 @@ class Schema:
 
         invalid_types = list()
         for key in self.data.keys():
-            if isinstance(self.data[key], self.valid_schema[key]):
+            if isinstance(self.data[key], self.valid_schema[key]["type"]):
                 pass
             else:
                 invalid_types.append(key)
