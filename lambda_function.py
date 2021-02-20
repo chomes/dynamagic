@@ -297,5 +297,5 @@ class DynaMagic():
 
         return {item_key: item_value[schema.valid_schema[item_key]["dynamo_type"]] for item_key, item_value in fetched_item.items()}
 
-
+    
     # Method for querying items based on field names
