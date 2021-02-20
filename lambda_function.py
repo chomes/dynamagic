@@ -210,11 +210,11 @@ class DynaMagic():
             return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
             
 
-    def delete_item(self, key: str) -> dict:
+    def delete_item(self, key: dict) -> dict:
         """Delete an item from the database.  This will validate that the item doesn't exist before and after.
 
         Args:
-            key (str): Provide the key for the table to find the item
+            key (dict): Provide the key for the table to find the item
 
         Returns:
             dict: Message to confirm if the item was deleted or not
@@ -223,13 +223,13 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
 
-        schema = Schema({"CustomerId": key})
+        schema = Schema(key)
         key_validation = schema.data_entegrity()
         if key_validation["status_code"] != 200:
             return key_validation
 
         item_validation = self.client.get_item(TableName=self.table, Key={
-            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key["CustomerId"]}
         })
         
         try:
@@ -238,11 +238,11 @@ class DynaMagic():
             return {"status_code": 400, "message": "The item does not exist, please check the ID and try again"}
         
         self.client.delete_item(TableName=self.table, Key={
-            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key["CustomerId"]}
         })
 
         delete_validation: dict = self.client.get_item(TableName=self.table, Key={
-            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key}
+            "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key["CustomerId"]}
         })
 
         try:
@@ -270,6 +270,32 @@ class DynaMagic():
         
         return converted_items
 
+    
+    def fetch_existing_item(self, key: dict) -> dict:
+        """Gets an individual item from the database 
+
+        Args:
+            key (dict): The dict with the customerId key and value
+
+        Returns:
+            dict: The Items information in a readable format or error message
+        """
+        validate_table = self.validate_table_exists()
+        if validate_table["status_code"] == 400:
+            return validate_table
         
-    # Method for getting an item from the database
+        schema = Schema(key)
+        if schema.data_entegrity()["status_code"] == 400:
+            schema.data_entegrity()
+        
+        try:
+            fetched_item: dict = self.client.get_item(TableName=self.table, Key={
+                "CustomerId": {schema.valid_schema["CustomerId"]["dynamo_type"]: key["CustomerId"]}
+            })["Item"]
+        except KeyError:
+            return {"status_code": 400, "message": "This key is invalid, please try again with a valid key"}
+
+        return {item_key: item_value[schema.valid_schema[item_key]["dynamo_type"]] for item_key, item_value in fetched_item.items()}
+
+
     # Method for querying items based on field names

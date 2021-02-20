@@ -71,7 +71,7 @@ class TestDynamoDb(unittest.TestCase):
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(dynamo.delete_item(key="1482328791"), {"status_code": 200, "message": "The item has been deleted successfully"})
+        self.assertEqual(dynamo.delete_item(key={"CustomerId": "1482328791"}), {"status_code": 200, "message": "The item has been deleted successfully"})
     
     @mock_dynamodb2
     def test_wrong_key_deleting_item(self):
@@ -79,10 +79,10 @@ class TestDynamoDb(unittest.TestCase):
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
-        self.assertEqual(dynamo.delete_item(key="1482328800"), {"status_code": 400, "message": "The item does not exist, please check the ID and try again"})
+        self.assertEqual(dynamo.delete_item(key={"CustomerId": "1482328800"}), {"status_code": 400, "message": "The item does not exist, please check the ID and try again"})
     
     @mock_dynamodb2
-    def test_getting_table_items(self):
+    def test_getting_items(self):
         dynamo = DynaMagic(table="test_table", region="eu-west-2")
         dynamo.create_table()
         dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
@@ -94,8 +94,24 @@ class TestDynamoDb(unittest.TestCase):
     "age": "32", "car": "Black Skoda"}, {"CustomerId": "1482324001", "name": "James Joseph", "address": "Oscar Wild landing view",
     "age": "40", "car": "Blue BMW"}])
 
+    @mock_dynamodb2
+    def test_getting_item(self):
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.fetch_existing_item(key={"CustomerId": "1482328791"}), {"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
     
-    
+    @mock_dynamodb2
+    def test_wrong_key_getting_item(self):
+        dynamo = DynaMagic(table="test_table", region="eu-west-2")
+        dynamo.create_table()
+        dynamo.add_item(new_item={"CustomerId": "1482328791", "name": "John Joseph", "address": "Jeff Bezos Candy land road",
+    "age": "32", "car": "Black Skoda"})
+        self.assertEqual(dynamo.fetch_existing_item(key={"CustomerId": "1482328300"}), {"status_code": 400, "message": "This key is invalid, please try again with a valid key"})
+
+
 class TestSchema(unittest.TestCase):
 
     def test_correct_keys(self):
