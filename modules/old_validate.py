@@ -1,4 +1,4 @@
-class Schema:
+class Validate:
     """The Schema module is designed to validate the data being put into the dynamodb database along allowing you to set mappings for the values
     when adding and searching in the DB.  
     The Schema has 4 attributes:

@@ -1,8 +1,35 @@
-from modules.schema import Schema
+from modules.validation import Validation
+import boto3
 from moto import mock_dynamodb2
 from lambda_function import DynaMagic
 from typing import List
 import unittest
+
+
+@mock_dynamodb2
+def create_table():
+    client = boto3.client("dynamodb", region_name="eu-west-2")
+    client.create_table(
+            TableName="test_table",
+        ProvisionedThroughput={
+            "ReadCapacityUnits": 140,
+            "WriteCapacityUnits": 140
+        },
+        AttributeDefinitions=[
+            {
+                "AttributeName": "CustomerId",
+                "AttributeType": "S"
+            }
+        ],
+        KeySchema=[
+        {
+                "AttributeName": "CustomerId",
+                "KeyType": "HASH"
+            } 
+        ],
+        BillingMode="PROVISIONED")
+    client.get_waiter("table_exists").wait(TableName="test_table",
+    WaiterConfig={"Delay": 2, "MaxAttempts": 5})
 
 
 class TestDynamoDb(unittest.TestCase):
@@ -113,58 +140,64 @@ class TestDynamoDb(unittest.TestCase):
 
 
 class TestSchema(unittest.TestCase):
+    @mock_dynamodb2
+    def test_validate_dynamodb_table_exists(self):
+        create_table()
+        validation = Validation(aws_region="eu-west-2")
+        self.assertAlmostEqual(validation.validate_dynamodb_table_exists(dynamodb_table="test_table"), {'status_code': 200, 'message': 'This table exists'})
+
 
     def test_correct_keys(self):
-        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.keys_validator(), {"status_code": 200, "message": "Keys Validated"})
 
     def test_modular_keys(self):
-        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42"})
+        schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42"})
         self.assertEqual(schema.keys_validator(full_validate=False), {"status_code": 200, "message": "Keys Validated"})
 
     def test_invalid_modular_keys(self):
-        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42", "comics": ["Flash", "batman"]})
+        schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "age": "42", "comics": ["Flash", "batman"]})
         self.assertEqual(schema.keys_validator(full_validate=False)["status_code"], 400 )
 
     def test_too_many_keys(self):
-        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda", "favourite_comics": ["Batman", "Flash", "Green Lantern"]})
         self.assertEqual(schema.keys_validator()["status_code"], 400)
     
     def test_too_few_keys(self):
-        schema = Schema(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road"})
+        schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road"})
         self.assertEqual(schema.keys_validator()["status_code"], 400)
 
     def test_id_too_short(self):
-        schema = Schema(data={"CustomerId": "1482", "name": "James Joseph", "address": "Jeff Bezos Candy land road"})
+        schema = Validate(data={"CustomerId": "1482", "name": "James Joseph", "address": "Jeff Bezos Candy land road"})
         self.assertEqual(schema.data_entegrity(), 
         {"status_code": 400, "message": "The customer ID is shorter then 10 digits long, please try again"})
     
     def test_id_too_long(self):
-        schema = Schema(data={"CustomerId": "1482328791288", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482328791288", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity(), 
         {"status_code": 400, "message": "The customer ID is longer then 10 digits long, please try again"})
     
     def test_id_is_int(self):
-        schema = Schema(data={"CustomerId": 1482328790, "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": 1482328790, "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity(),
          {"status_code": 400, "message": "The customer ID cannot be an int, please make this a string"})
     
     def test_id_is_not_number(self):
-        schema = Schema(data={"CustomerId": "1482fallen", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482fallen", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity(), {"status_code": 400, "message": "The CustomerId is not a number, please check this and make sure the data is correct"})
 
     def test_data_validation(self):
-        schema = Schema(data={"CustomerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity(), {"status_code": 200, "message": "Data has been validated"})
     
     def test_data_not_validated(self):
-        schema = Schema(data={"CustomerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
+        schema = Validate(data={"CustomerId": "1482328790", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": 32, "car": "Black Skoda"})
         self.assertEqual(schema.data_entegrity()["status_code"], 400)
 

@@ -1,6 +1,6 @@
 import boto3
 import botocore
-from modules.schema import Schema
+from modules.old_validate import Validate
 from typing import Dict, List
 from time import sleep
 
@@ -28,7 +28,7 @@ class DynaMagic():
         Returns:
             dict: Response code of the action
         """
-        schema = Schema()
+        schema = Validate()
         validate_existing_table = self.client.list_tables()["TableNames"]
         if not self.table in validate_existing_table:
             pass
@@ -83,7 +83,7 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
         
-        schema = Schema(data=new_item)
+        schema = Validate(data=new_item)
         key_validator = schema.keys_validator() 
         if key_validator["status_code"] == 400:
             return key_validator
@@ -144,7 +144,7 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
 
-        schema = Schema(data)
+        schema = Validate(data)
         data_validator = schema.data_entegrity()
         if data_validator["status_code"] == 200:
             pass
@@ -223,7 +223,7 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
 
-        schema = Schema(key)
+        schema = Validate(key)
         key_validation = schema.data_entegrity()
         if key_validation["status_code"] != 200:
             return key_validation
@@ -262,7 +262,7 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
         
-        schema = Schema()
+        schema = Validate()
         fetched_items: list = self.client.scan(TableName=self.table)["Items"]
         converted_items: List[dict] = list()
         for item in fetched_items:
@@ -284,7 +284,7 @@ class DynaMagic():
         if validate_table["status_code"] == 400:
             return validate_table
         
-        schema = Schema(key)
+        schema = Validate(key)
         if schema.data_entegrity()["status_code"] == 400:
             schema.data_entegrity()
         
