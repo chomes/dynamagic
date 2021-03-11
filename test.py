@@ -146,7 +146,6 @@ class TestSchema(unittest.TestCase):
         validation = Validation(aws_region="eu-west-2")
         self.assertAlmostEqual(validation.validate_dynamodb_table_exists(dynamodb_table="test_table"), {'status_code': 200, 'message': 'This table exists'})
 
-
     def test_correct_keys(self):
         schema = Validate(data={"CustomerId": "1482328791", "name": "James Joseph", "address": "Jeff Bezos Candy land road",
     "age": "32", "car": "Black Skoda"})
