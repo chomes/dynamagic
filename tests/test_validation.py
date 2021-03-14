@@ -1,5 +1,4 @@
 from dynamagic.modules.validation import Validation
-
 import boto3
 from moto import mock_dynamodb2
 import unittest
@@ -144,13 +143,23 @@ class TestValidation(unittest.TestCase):
     
     def test_validate_attributes_updated(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_attributes_updated(response={'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}, validated_new_attributes={'age': {'S': '32'}, 
+        self.assertEqual(validation.validate_attributes_updated(response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
+        validated_new_attributes={'age': {'S': '32'}, 
         'car': {'S': 'Black Skoda'}}), {"status_code": 200, "message": "Updated the items successfully"})
     
     def test_validate_attributes_not_updated(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_attributes_updated(response={'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}, validated_new_attributes={'age': {'S': '35'}, 
-        'car': {'S': 'Blue BMW'}}), {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."})
+        self.assertEqual(validation.validate_attributes_updated(response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
+        validated_new_attributes={'age': {'S': '35'}, 'car': {'S': 'Blue BMW'}}), 
+        {'status_code': 400, 'message': 'The items did not update as expected, please try again'})
+    
+    def test_validate_attributes_failed_to_update(self):
+        validation: Validation = Validation()
+        self.assertEqual(validation.validate_attributes_updated(response={}, 
+        validated_new_attributes={'age': {'S': '32'}, 
+        'car': {'S': 'Black Skoda'}}), {'status_code': 400, 
+        'message': 'The update_item method did not succeed as expected, please trouble shoot.'})
+
 
 
 if __name__ == '__main__':

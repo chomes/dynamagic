@@ -128,7 +128,9 @@ class Validation:
             Dict[str, int]: Generated response code
         """
         try:
-            if response["Attributes"] == validated_new_attributes:
-                return {"status_code": 200, "message": "Updated the items successfully"}
+            if response['Attributes'] == validated_new_attributes:
+                return {'status_code': 200, 'message': 'Updated the items successfully'}
+            elif response['Attributes'] != validated_new_attributes:
+                return {'status_code': 400, 'message': 'The items did not update as expected, please try again'}
         except KeyError:
-            return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
+            return {'status_code': 400, 'message': 'The update_item method did not succeed as expected, please trouble shoot.'}

@@ -7,7 +7,7 @@ class UpdateItem:
         self.client = boto3.client('dynamodb', region_name=self.aws_region)
         self.dynamodb_table = dynamodb_table
         self.expression_mapping: dict = {'name': {'expression_attribute_name': '#N', 'expression_attribute_var': ":n"},
-        'address': {'expression_attribute_name': '#AD', 'expression_attribute_var': 'ad'},
+        'address': {'expression_attribute_name': '#AD', 'expression_attribute_var': ':ad'},
         'age': {'expression_attribute_name': '#AG', 'expression_attribute_var': ':ag'},
         'car': {'expression_attribute_name': '#C', 'expression_attribute_var': ':c'}} 
     
@@ -23,9 +23,13 @@ class UpdateItem:
             Dict[str, str]: Returns either a dict with attributes in it or a blank dict.
         """
         try:
+            duplicate_attributes = list()
             for attribute, value in new_attributes.items():
                 if value == old_attributes[attribute]:
-                    new_attributes.pop(attribute)
+                    duplicate_attributes.append(attribute)
+            
+            for duplicate_attribute in duplicate_attributes:
+                new_attributes.pop(duplicate_attribute)
             
             return new_attributes
         except KeyError:
@@ -71,7 +75,7 @@ class UpdateItem:
         except KeyError:
             return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
     
-    def generate_expression_attribute_values(self, new_attributes: dict, dynamodb_format_mapper: dict) -> Dict[str, str]:
+    def generate_expression_attribute_values(self, new_attributes: dict, dynamodb_format_mapper: dict) -> Dict[str, int]:
         """Generate a dict with expression attribute values to be used to update the item
 
         Args:
@@ -82,7 +86,7 @@ class UpdateItem:
             Dict[str, str]: Dictionary with attribute values generated
         """
         try:
-            return {self.expression_mapping[attribute]['expression_attribute_var']: {dynamodb_format_mapper[attribute]['dynamodb_type']: value} for attribute, value in new_attributes.items()}
+            return {self.expression_mapping[attribute]['expression_attribute_var']: {dynamodb_format_mapper[attribute]['dynamodb_type']: value} for attribute,value in new_attributes.items()}
         except KeyError:
             return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
 
