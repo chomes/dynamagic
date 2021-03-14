@@ -4,7 +4,7 @@ import boto3
 
 
 class Validation:
-    def __init__(self, aws_region: str):
+    def __init__(self, aws_region: str or None = None):
         self.new_item_schema = Schema({'CustomerId': And(Use(str), lambda client_id_length: len(client_id_length) == 10, lambda client_id: int(client_id)),
         'name': And(Use(str)), 'address': And(Use(str)), 'age': And(Use(str)), 'car': And(Use(str))})
         self.update_item_schema = Schema({'CustomerId': And(Use(str), lambda client_id_length: len(client_id_length) == 10),
@@ -74,12 +74,12 @@ class Validation:
         """
         try:
             return dynnamodb_schema.validate(unvalidated_item)
-        except SchemaError:
-            return {'status_code': 400, 'message': 'Either the CustomerID is not 10 characters long or it is not in numerical form, please format and try again.'}
         except SchemaWrongKeyError as e:
             return {'status_code': 400, 'message': f'{str(e).split()[2]} is not a key you can use, please try again'}
         except SchemaMissingKeyError as e:
             return {'status_code': 400, 'message': f'You are missing {str(e).split()[2]} in your schema, please add it and try again'}
+        except SchemaError:
+            return {'status_code': 400, 'message': 'Either the CustomerID is not 10 characters long or it is not in numerical form, please format and try again.'}
     
     def validate_item_to_db_format(self, dynamodb_item: dict) -> Dict[str, dict]:
         """Generate the item to a format that Dynamo DB will accept when adding it to the database
@@ -102,3 +102,33 @@ class Validation:
             Dict[str]: Formatted dictionary
         """
         return {attribute: value[self.dynamodb_format_mapper[attribute]['dynamodb_type']] for attribute, value in dynamodb_item.items()}
+    
+    def validate_new_attributes_exist(self, item_attributes: dict) -> Dict[str, int]:
+        """Following the update_item method removing_duplicated_data, this will confirm if any new attributes exist to update into the database
+
+        Args:
+            item_attributes (dict): Dictionary of attributes after the removing_duplicated_data has gone through it
+
+        Returns:
+            Dict[str, int]: Returns the items or dict with a status code and a message
+        """
+        if len(item_attributes) == 0:
+            return {'status_code': 400, 'message': 'All data was the same, cancelling operation, please provide new data and update the item again'}
+        elif len(item_attributes) > 0:
+            return item_attributes
+    
+    def validate_attributes_updated(self, response: dict, validated_new_attributes: dict) -> Dict[str, int]:
+        """Validate that the attributes required to be updated have been updated by comparing the response dictionary to the converted attributes dictionary
+
+        Args:
+            response (dict): Response output from the push_update method 
+            validated_new_attributes (dict): new_attributes that have been converted by using the validate_item_to_db_format
+
+        Returns:
+            Dict[str, int]: Generated response code
+        """
+        try:
+            if response["Attributes"] == validated_new_attributes:
+                return {"status_code": 200, "message": "Updated the items successfully"}
+        except KeyError:
+            return {"status_code": 400, "message": "The update_item method did not succeed as expected, please trouble shoot."}
