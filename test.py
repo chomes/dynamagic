@@ -34,11 +34,7 @@ def create_table():
 
 class TestDynamoDb(unittest.TestCase):
     
-    @mock_dynamodb2
-    def test_create_table(self):
-        dynamo = DynaMagic(table="test_table", region="eu-west-2")
-        self.assertEqual(dynamo.create_table(), {"status_code": 200, 
-            "message": "Table test_table has been created!"})
+    
     
     @mock_dynamodb2
     def test_creating_duplicate_table(self):
