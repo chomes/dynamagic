@@ -20,7 +20,7 @@ class Validation:
         """Checks if table exists before proceeding with actions
 
         Returns:
-            dict: status code and message if valid or not
+            Dict[str, int]: status code and message if valid or not
         """
         try:
             dynamodb = boto3.client('dynamodb', region_name=self.aws_region)
