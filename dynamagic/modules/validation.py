@@ -16,34 +16,6 @@ class Validation:
         self.aws_region = aws_region
 
   
-    def validate_dynamodb_table_exists(self, dynamodb_table: str) -> Dict[str, int]:
-        """Checks if table exists before proceeding with actions
-
-        Returns:
-            Dict[str, int]: status code and message if valid or not
-        """
-        try:
-            dynamodb = boto3.client('dynamodb', region_name=self.aws_region)
-            dynamodb.scan(TableName=dynamodb_table)
-            return {'status_code': 200, 'message': 'This table exists'}
-        except dynamodb.exceptions.ResourceNotFoundException:
-            return {'status_code': 400, 'message': 'The table does not exist, please try again with the correct name'}
-    
-    def validate_dynamodb_item_exists(self, table_item: dict) -> Dict[str, int]:
-        """Validates the item grabbed exists
-
-        Args:
-            table_item (dict): Response from dynamodb when fetching an item
-
-        Returns:
-            Dict[str, int]: status code
-        """
-        try:
-            table_item['Item']
-            return {'status_code': 200, 'message': 'This item exists'}
-        except KeyError:
-            return {'status_code': 400, 'message': 'This item does not exist'}
-
     def validation_schema(self, validation_type: str) -> Schema or Dict[str, int]:
         """Grab a schema based on the validation you need to do
 

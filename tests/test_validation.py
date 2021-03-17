@@ -1,33 +1,7 @@
 from dynamagic.modules.validation import Validation
-import boto3
-from moto import mock_dynamodb2
 import unittest
 
 class TestValidation(unittest.TestCase):
-    @mock_dynamodb2
-    def create_table(self):
-        client = boto3.client('dynamodb', region_name='eu-west-2')
-        client.create_table(
-                TableName='test_table',
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 140,
-                'WriteCapacityUnits': 140
-            },
-            AttributeDefinitions=[
-                {
-                    'AttributeName': 'CustomerId',
-                    'AttributeType': 'S'
-                }
-            ],
-            KeySchema=[
-            {
-                    'AttributeName': 'CustomerId',
-                    'KeyType': 'HASH'
-                } 
-            ],
-            BillingMode='PROVISIONED')
-        client.get_waiter('table_exists').wait(TableName='test_table',
-        WaiterConfig={'Delay': 2, 'MaxAttempts': 5})
     
     def test_creating_validation_class(self):
         validation = Validation()
@@ -41,24 +15,6 @@ class TestValidation(unittest.TestCase):
         validation = Validation(aws_region='eu-west-2')
         self.assertIsInstance(validation.aws_region, str)
 
-    @mock_dynamodb2
-    def test_validate_dynamodb_table_exists(self):
-        self.create_table()
-        validation: Validation = Validation(aws_region='eu-west-2')
-        self.assertEqual(validation.validate_dynamodb_table_exists(dynamodb_table='test_table'), {'status_code': 200, 'message': 'This table exists'})
-    
-    @mock_dynamodb2
-    def test_validate_dynamodb_table_does_not_exist(self):
-        validation: Validation = Validation(aws_region='eu-west-2')
-        self.assertEqual(validation.validate_dynamodb_table_exists(dynamodb_table='test_table'), {'status_code': 400, 'message': 'The table does not exist, please try again with the correct name'})
-    
-    def test_validate_dynamodb_item_exists(self):
-        validation: Validation = Validation()
-        self.assertEqual(validation.validate_dynamodb_item_exists(table_item={'Item': {'CustomerId': {'S': '1029481090'}}, 'age': {'S': '32'}, 'address': {'S': '39 Candyland Road'}}),
-        {'status_code': 200, 'message': 'This item exists'})
-    def test_validation_dynamodb_item_does_not_exist(self):
-        validation: Validation = Validation()
-        self.assertEqual(validation.validate_dynamodb_item_exists(table_item={'Response': '200'}), {'status_code': 400, 'message': 'This item does not exist'})
     def test_validation_schema_new_item(self):
         validation: Validation = Validation()
         self.assertEqual(validation.validation_schema(validation_type='new_item'), validation.new_item_schema)
