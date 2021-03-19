@@ -35,15 +35,6 @@ class Validation:
             return {'status_code': 400, 'message': 'You did not specify a validation type when using validation schema, please choose either new_item or updated_item'}
 
     def validate_item_data_entegrity(self, dynnamodb_schema: Schema, unvalidated_item: dict) -> Dict[str, int]:
-        """Validate the item for use on dynamodb based on the schema used
-
-        Args:
-            dynnamodb_schema (Schema): Provide a schema that will returned using validation_schema method
-            unvalidated_item (dict): Dict of the item you want to validate the data of
-
-        Returns:
-            Dict[str, int]: Data will be validated or will have a status code
-        """
         try:
             return dynnamodb_schema.validate(unvalidated_item)
         except SchemaWrongKeyError as e:
@@ -54,36 +45,12 @@ class Validation:
             return {'status_code': 400, 'message': 'Either the CustomerID is not 10 characters long or it is not in numerical form, please format and try again.'}
     
     def validate_item_to_db_format(self, dynamodb_item: dict) -> Dict[str, dict]:
-        """Generate the item to a format that Dynamo DB will accept when adding it to the database
-
-        Args:
-            dynamodb_item (dict): The item with all it's attributes inside it.
-
-        Returns:
-            Dict[str]: Converted dictionary
-        """
         return {attribute: {self.dynamodb_format_mapper[attribute]['dynamodb_type']: value} for attribute, value in dynamodb_item.items()}
     
     def validate_item_to_readable_format(self, dynamodb_item: dict) -> Dict[str, str]:
-        """Generate the item from Dynamo DB format to a standard dict for readability
-
-        Args:
-            dynamodb_item (dict): Dict item from dynamoDB
-
-        Returns:
-            Dict[str]: Formatted dictionary
-        """
         return {attribute: value[self.dynamodb_format_mapper[attribute]['dynamodb_type']] for attribute, value in dynamodb_item.items()}
     
     def validate_new_attributes_exist(self, item_attributes: dict) -> Dict[str, int]:
-        """Following the update_item method removing_duplicated_data, this will confirm if any new attributes exist to update into the database
-
-        Args:
-            item_attributes (dict): Dictionary of attributes after the removing_duplicated_data has gone through it
-
-        Returns:
-            Dict[str, int]: Returns the items or dict with a status code and a message
-        """
         if len(item_attributes) == 0:
             return {'status_code': 400, 'message': 'All data was the same, cancelling operation, please provide new data and update the item again'}
         elif len(item_attributes) > 0:

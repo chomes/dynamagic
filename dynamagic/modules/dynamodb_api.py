@@ -92,10 +92,13 @@ class DynamodbApi:
         try:
             return self.client.get_item(TableName=self.dynamodb_table, Key=key)["Item"]
         except KeyError:
-            return {"status_code": 400, "message": "This key is invalid, please try again with a valid key"}
+            return {"status_code": 400, 'message': 'This key is invalid, please try again with a valid key'}
 
     def get_items(self) -> List[Dict[str, str]]:
-        return self.client.scan(TableName=self.dynamodb_table)["Items"]
+        try:
+            return self.client.scan(TableName=self.dynamodb_table)["Items"]
+        except KeyError:
+           {"status_code": 400, 'message': 'This table is not valid or does not have any items please try again'}
 
     def remove_item(self, key: str) -> Dict[str, int]:
         try:
