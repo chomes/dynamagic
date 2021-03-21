@@ -147,14 +147,5 @@ class TestDynamodbApi(unittest.TestCase):
         {'CustomerId': {'S': '1482328721'}, 'name': {'S': 'John Joseph'}, 
         'address': {'S': 'Jeff Bezos Candy land road'}, 'age': {'S': '38'}, 'car': {'S': 'Blue BMW'}}])
 
-
-    
-
-        
-
-
-
-
-
 if __name__ == '__main__':
     unittest.main()

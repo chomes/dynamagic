@@ -3,7 +3,7 @@ class ValidationWrongKeyError(Exception):
         self.data = data
     
     def __str__(self) -> str:
-        return f'Key {self.data} is not part of this the schema for this data, please try again '
+        return f'Key {self.data} is not part of this the schema for this data, please try again'
 
 class ValidationMissingKeyError(Exception):
     def __init__(self, data: str) -> None:
