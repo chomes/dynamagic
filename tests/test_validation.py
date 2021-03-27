@@ -1,4 +1,6 @@
 from dynamagic.modules.validation import Validation
+from dynamagic.modules.exceptions import ValidationFailedAttributesUpdateError, ValidationIncorrectAttributesError, ValidationNoNewAttributesError, ValidationWrongSchemaTypeError, ValidationWrongKeyError, \
+    ValidationMissingKeyError, ValidationIncorrectKeyTypeError
 import unittest
 
 class TestValidation(unittest.TestCase):
@@ -29,8 +31,7 @@ class TestValidation(unittest.TestCase):
     
     def test_failed_to_grab_validation_Schema(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validation_schema(validation_type='not a schema'), {'status_code': 400, 
-        'message': 'You did not specify a validation type when using validation schema, please choose either new_item or updated_item'})
+        self.assertRaises(ValidationWrongSchemaTypeError, validation.validation_schema, validation_type='not a schema')
     
     def test_validate_item_data_entegrity_new_item(self):
         validation: Validation = Validation()
@@ -59,21 +60,21 @@ class TestValidation(unittest.TestCase):
 
     def test_validate_item_data_entegrity_incorrect_key(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_item_data_entegrity(dynnamodb_schema=validation.update_item_schema,
-        unvalidated_item={'CustomerId': '148232879', 'name': 'James Joseph', 'address': 'Jeff Bezos Candy land road'}), 
-        {'status_code': 400, 'message': 'Either the CustomerID is not 10 characters long or it is not in numerical form, please format and try again.'})
+        self.assertRaises(ValidationIncorrectKeyTypeError, validation.validate_item_data_entegrity, 
+        dynnamodb_schema=validation.update_item_schema,
+         unvalidated_item={'CustomerId': '148232879', 'name': 'James Joseph', 'address': 'Jeff Bezos Candy land road'})
     
     def test_validate_item_data_entegrity_missing_key(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_item_data_entegrity(dynnamodb_schema=validation.new_item_schema, 
+        self.assertRaises(ValidationMissingKeyError, validation.validate_item_data_entegrity, dynnamodb_schema=validation.new_item_schema,
         unvalidated_item={'CustomerId': '1482328791', 'name': 'James Joseph', 'address': 'Jeff Bezos Candy land road',
-    'age': '32'}), {'status_code': 400, 'message': '''You are missing 'car' in your schema, please add it and try again'''})
+    'age': '32'})
 
-    def test_validate_item_Data_entegrity_wrong_key(self):
+    def test_validate_item_data_entegrity_wrong_key(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_item_data_entegrity(dynnamodb_schema=validation.update_item_schema,
-        unvalidated_item={'CustomerId': '1482328790', 'name': 'James Joseph', 'address': 'Jeff Bezos Candy land road', 'comics': 'Batman'}), 
-        {'status_code': 400, 'message': ''''comics' is not a key you can use, please try again'''})
+        self.assertRaises(ValidationWrongKeyError, validation.validate_item_data_entegrity,
+        dynnamodb_schema=validation.update_item_schema,
+        unvalidated_item={'CustomerId': '1482328790', 'name': 'James Joseph', 'address': 'Jeff Bezos Candy land road', 'comics': 'Batman'})
     
     def test_validate_item_to_db_format(self):
         validation: Validation = Validation()
@@ -94,28 +95,26 @@ class TestValidation(unittest.TestCase):
     
     def test_validate_new_attributes_do_not_exist(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_new_attributes_exist(item_attributes={}), {'status_code': 400, 
-        'message': 'All data was the same, cancelling operation, please provide new data and update the item again'})
+        with self.assertRaises(ValidationNoNewAttributesError):
+            validation.validate_new_attributes_exist(item_attributes={})
     
     def test_validate_attributes_updated(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_attributes_updated(response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
+        self.assertTrue(validation.validate_attributes_updated(response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
         validated_new_attributes={'age': {'S': '32'}, 
-        'car': {'S': 'Black Skoda'}}), {"status_code": 200, "message": "Updated the items successfully"})
+        'car': {'S': 'Black Skoda'}}))
     
     def test_validate_attributes_not_updated(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_attributes_updated(response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
-        validated_new_attributes={'age': {'S': '35'}, 'car': {'S': 'Blue BMW'}}), 
-        {'status_code': 400, 'message': 'The items did not update as expected, please try again'})
+        self.assertRaises(ValidationIncorrectAttributesError, validation.validate_attributes_updated,
+        response={'Attributes': {'age': {'S': '32'}, 'car': {'S': 'Black Skoda'}}}, 
+        validated_new_attributes={'age': {'S': '35'}, 'car': {'S': 'Blue BMW'}})
     
     def test_validate_attributes_failed_to_update(self):
         validation: Validation = Validation()
-        self.assertEqual(validation.validate_attributes_updated(response={}, 
-        validated_new_attributes={'age': {'S': '32'}, 
-        'car': {'S': 'Black Skoda'}}), {'status_code': 400, 
-        'message': 'The update_item method did not succeed as expected, please trouble shoot.'})
-
+        self.assertRaises(ValidationFailedAttributesUpdateError, validation.validate_attributes_updated,
+        response={}, validated_new_attributes={'age': {'S': '32'}, 
+        'car': {'S': 'Black Skoda'}})
 
 
 if __name__ == '__main__':

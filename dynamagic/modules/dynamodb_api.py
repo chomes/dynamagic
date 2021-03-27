@@ -1,5 +1,7 @@
 import boto3
+from botocore.exceptions import ParamValidationError
 from typing import Dict, List
+from dynamagic.modules.exceptions import DynamoDbWrongKeyError, ValidationIncorrectAttributeError, DynamoDbInvalidTableError, DynamoDbWrongKeyFormatError
 
 class DynamodbApi:
     def __init__(self, aws_region: str, dynamodb_table: str) -> None:
@@ -11,17 +13,17 @@ class DynamodbApi:
         'age': {'expression_attribute_name': '#AG', 'expression_attribute_var': ':ag'},
         'car': {'expression_attribute_name': '#C', 'expression_attribute_var': ':c'}} 
     
-    def add_item(self, dynamodb_item: dict) -> Dict[str, int]:
+    def add_item(self, dynamodb_item: dict) -> bool or Exception:
         try:
             self.client.put_item(
                 TableName=self.dynamodb_table,
                 Item=dynamodb_item
             )
-            return {'status_code': 200, 'message': 'Item has been added successfully'}
+            return True
         except self.client.exceptions.ClientError:
-            return {'status_code': 400, 'message': 'Failed to add the item, a key was not provided'}
+            raise DynamoDbWrongKeyError
     
-    def remove_duplicated_attributes(self, new_attributes: dict, old_attributes: dict) -> Dict[str, str]:
+    def remove_duplicated_attributes(self, new_attributes: dict, old_attributes: dict) -> Dict[str, str] or Exception:
         try:
             duplicate_attributes = list()
             for attribute, value in new_attributes.items():
@@ -32,10 +34,10 @@ class DynamodbApi:
                 new_attributes.pop(duplicate_attribute)
             
             return new_attributes
-        except KeyError:
-            return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
+        except KeyError as error:
+            raise ValidationIncorrectAttributeError(data=error)
     
-    def generate_update_expression(self, new_attributes: dict) -> str or Dict[str, int]:
+    def generate_update_expression(self, new_attributes: dict) -> str or Dict[str, str] or Exception:
         update_expression = str()
         try:
             for attribute in new_attributes.keys():
@@ -50,16 +52,16 @@ class DynamodbApi:
                     update_expression += f', {self.expression_mapping[attribute]["expression_attribute_name"]} = {self.expression_mapping[attribute]["expression_attribute_var"]}'
             
             return update_expression
-        except KeyError:
-            return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
+        except KeyError as error:
+            raise ValidationIncorrectAttributeError(data=error)
 
-    def generate_expression_attribute_names(self, new_attributes: dict) -> Dict[str, int]:
+    def generate_expression_attribute_names(self, new_attributes: dict) -> Dict[str, str] or Exception:
         try:
             return {self.expression_mapping[attribute]['expression_attribute_name']: attribute for attribute in new_attributes.keys()}
-        except KeyError:
-            return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
+        except KeyError as error:
+            raise ValidationIncorrectAttributeError(data=error)
     
-    def generate_expression_attribute_values(self, new_attributes: dict, dynamodb_validation_format_mapper: dict) -> Dict[str, int]:
+    def generate_expression_attribute_values(self, new_attributes: dict, dynamodb_validation_format_mapper: dict) -> Dict[str, str] or Exception:
         """Generate a dict with expression attribute values to be used to update the item
 
         Args:
@@ -72,8 +74,8 @@ class DynamodbApi:
         try:
             return {self.expression_mapping[attribute]['expression_attribute_var']: 
             {dynamodb_validation_format_mapper[attribute]['dynamodb_type']: value} for attribute,value in new_attributes.items()}
-        except KeyError:
-            return {'status_code': 400, 'message': 'You have provided an incorrect attribute please try again'}
+        except KeyError as error:
+            raise ValidationIncorrectAttributeError(data=error)
 
 
     def push_update(self, key: dict, update_expression: str, expression_attribute_names: dict, expression_attribute_values: dict) -> Dict[str, str]:
@@ -88,23 +90,23 @@ class DynamodbApi:
         return response
     
 
-    def get_item(self, key: dict) -> Dict[str, int]:
+    def get_item(self, key: dict) -> Dict[str, str] or Exception:
         try:
             return self.client.get_item(TableName=self.dynamodb_table, Key=key)["Item"]
         except KeyError:
-            return {"status_code": 400, 'message': 'This key is invalid, please try again with a valid key'}
+            raise DynamoDbWrongKeyError
 
-    def get_items(self) -> List[Dict[str, str]]:
+    def get_items(self) -> List[Dict[str, str]] or Exception:
         try:
             return self.client.scan(TableName=self.dynamodb_table)["Items"]
-        except KeyError:
-           {"status_code": 400, 'message': 'This table is not valid or does not have any items please try again'}
+        except self.client.exceptions.ResourceNotFoundException:
+           raise DynamoDbInvalidTableError
 
-    def remove_item(self, key: str) -> Dict[str, int]:
+    def remove_item(self, key: str) -> bool or Exception:
         try:
             self.client.delete_item(TableName=self.dynamodb_table,
             Key=key)
-            return {'status_code': 200, 'message': 'Item was attempted to be deleted, validate to confirm'}
-        except self.client.exceptions.ParamValidationError:
-            return {'status_code': 400, 'message': 'You have provided the wrong type for the key, it must be a dict, please try again'}
+            return True
+        except ParamValidationError:
+            raise DynamoDbWrongKeyFormatError
         

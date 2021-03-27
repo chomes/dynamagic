@@ -1,6 +1,7 @@
 from schema import Schema, And, SchemaError, SchemaMissingKeyError, SchemaWrongKeyError, Use, Optional
 from typing import Dict
-import boto3
+from dynamagic.modules.exceptions import ValidationFailedAttributesUpdateError, ValidationIncorrectAttributesError, ValidationNoNewAttributesError, ValidationWrongSchemaTypeError, ValidationWrongKeyError, ValidationMissingKeyError, \
+    ValidationIncorrectKeyTypeError
 
 
 class Validation:
@@ -16,7 +17,7 @@ class Validation:
         self.aws_region = aws_region
 
   
-    def validation_schema(self, validation_type: str) -> Schema or Dict[str, int]:
+    def validation_schema(self, validation_type: str) -> Schema or Exception:
         """Grab a schema based on the validation you need to do
 
         Args:
@@ -32,17 +33,17 @@ class Validation:
         elif validation_type == 'delete_item' or validation_type == 'read_item':
             return self.dynamodb_key_schema
         else:
-            return {'status_code': 400, 'message': 'You did not specify a validation type when using validation schema, please choose either new_item or updated_item'}
+            raise ValidationWrongSchemaTypeError(data=validation_type)
 
-    def validate_item_data_entegrity(self, dynnamodb_schema: Schema, unvalidated_item: dict) -> Dict[str, int]:
+    def validate_item_data_entegrity(self, dynnamodb_schema: Schema, unvalidated_item: dict) -> Dict[str, str] or Exception:
         try:
             return dynnamodb_schema.validate(unvalidated_item)
-        except SchemaWrongKeyError as e:
-            return {'status_code': 400, 'message': f'{str(e).split()[2]} is not a key you can use, please try again'}
-        except SchemaMissingKeyError as e:
-            return {'status_code': 400, 'message': f'You are missing {str(e).split()[2]} in your schema, please add it and try again'}
-        except SchemaError:
-            return {'status_code': 400, 'message': 'Either the CustomerID is not 10 characters long or it is not in numerical form, please format and try again.'}
+        except SchemaWrongKeyError as error:
+            raise ValidationWrongKeyError(data=str(error).split()[2])
+        except SchemaMissingKeyError as error:
+            raise ValidationMissingKeyError(data=str(error).split()[2])
+        except SchemaError as error:
+            raise ValidationIncorrectKeyTypeError(data=str(error).split()[2])
     
     def validate_item_to_db_format(self, dynamodb_item: dict) -> Dict[str, dict]:
         return {attribute: {self.dynamodb_format_mapper[attribute]['dynamodb_type']: value} for attribute, value in dynamodb_item.items()}
@@ -50,13 +51,13 @@ class Validation:
     def validate_item_to_readable_format(self, dynamodb_item: dict) -> Dict[str, str]:
         return {attribute: value[self.dynamodb_format_mapper[attribute]['dynamodb_type']] for attribute, value in dynamodb_item.items()}
     
-    def validate_new_attributes_exist(self, item_attributes: dict) -> Dict[str, int]:
+    def validate_new_attributes_exist(self, item_attributes: dict) -> Dict[str, str] or Exception:
         if len(item_attributes) == 0:
-            return {'status_code': 400, 'message': 'All data was the same, cancelling operation, please provide new data and update the item again'}
+            raise ValidationNoNewAttributesError
         elif len(item_attributes) > 0:
             return item_attributes
     
-    def validate_attributes_updated(self, response: dict, validated_new_attributes: dict) -> Dict[str, int]:
+    def validate_attributes_updated(self, response: dict, validated_new_attributes: dict) -> bool or Exception:
         """Validate that the attributes required to be updated have been updated by comparing the response dictionary to the converted attributes dictionary
 
         Args:
@@ -68,8 +69,8 @@ class Validation:
         """
         try:
             if response['Attributes'] == validated_new_attributes:
-                return {'status_code': 200, 'message': 'Updated the items successfully'}
+                return True
             elif response['Attributes'] != validated_new_attributes:
-                return {'status_code': 400, 'message': 'The items did not update as expected, please try again'}
+                raise ValidationIncorrectAttributesError
         except KeyError:
-            return {'status_code': 400, 'message': 'The update_item method did not succeed as expected, please trouble shoot.'}
+            raise ValidationFailedAttributesUpdateError
