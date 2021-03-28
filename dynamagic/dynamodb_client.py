@@ -6,7 +6,7 @@ import dynamagic.modules.exceptions as dynamodb_exceptions
 
 
 class DynamodbClient(DynamodbApi):
-    def __init__(self, aws_region, dynamodb_table):
+    def __init__(self, aws_region: str, dynamodb_table: str):
         super.__init__(aws_region=aws_region, dynamodb_table=dynamodb_table)
         self.validation = Validation()
     
