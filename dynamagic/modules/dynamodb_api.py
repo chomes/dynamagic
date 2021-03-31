@@ -1,29 +1,32 @@
-import boto3
 from botocore.exceptions import ParamValidationError
-from typing import Dict, List
-from dynamagic.modules.exceptions import DynamoDbWrongKeyError, ValidationIncorrectAttributeError, DynamoDbInvalidTableError, DynamoDbWrongKeyFormatError
+from typing import Dict, List, Union
+import boto3
+from dynamagic.modules.exceptions import DynamoDbWrongKeyError, ValidationIncorrectAttributeError, \
+     DynamoDbInvalidTableError, DynamoDbWrongKeyFormatError
+
 
 class DynamodbApi:
     def __init__(self, aws_region: str, dynamodb_table: str) -> None:
         self.aws_region = aws_region
         self.client = boto3.client('dynamodb', region_name=aws_region)
         self.dynamodb_table = dynamodb_table
-        self.expression_mapping: dict = {'name': {'expression_attribute_name': '#N', 'expression_attribute_var': ":n"},
+        self.expression_mapping: Dict[str, Dict[str, str]] = {'name': {'expression_attribute_name': '#N', 'expression_attribute_var': ":n"},
         'address': {'expression_attribute_name': '#AD', 'expression_attribute_var': ':ad'},
         'age': {'expression_attribute_name': '#AG', 'expression_attribute_var': ':ag'},
         'car': {'expression_attribute_name': '#C', 'expression_attribute_var': ':c'}} 
     
-    def add_item(self, dynamodb_item: dict) -> bool or Exception:
+    def add_item(self, dynamodb_item: Dict[str, Dict[str, str]]) -> Union[bool, Exception]:
         try:
             self.client.put_item(
                 TableName=self.dynamodb_table,
                 Item=dynamodb_item
             )
             return True
-        except self.client.exceptions.ClientError:
-            raise DynamoDbWrongKeyError
+        except self.client.exceptions.ClientError as error:
+            raise DynamoDbWrongKeyError from error
     
-    def remove_duplicated_attributes(self, new_attributes: dict, old_attributes: dict) -> Dict[str, str] or Exception:
+    @staticmethod
+    def remove_duplicated_attributes(new_attributes: Dict[str, str], old_attributes: Dict[str, str]) -> Union[Dict[str, str], Exception]:
         try:
             duplicate_attributes = list()
             for attribute, value in new_attributes.items():
@@ -35,7 +38,7 @@ class DynamodbApi:
             
             return new_attributes
         except KeyError as error:
-            raise ValidationIncorrectAttributeError(data=error)
+            raise ValidationIncorrectAttributeError(data=error) from error
     
     def generate_update_expression(self, new_attributes: dict) -> str or Dict[str, str] or Exception:
         update_expression = str()
@@ -53,15 +56,16 @@ class DynamodbApi:
             
             return update_expression
         except KeyError as error:
-            raise ValidationIncorrectAttributeError(data=error)
+            raise ValidationIncorrectAttributeError(data=error) from error
 
-    def generate_expression_attribute_names(self, new_attributes: dict) -> Dict[str, str] or Exception:
+    def generate_expression_attribute_names(self, new_attributes: dict) -> Union[Dict[str, str], Exception]:
         try:
             return {self.expression_mapping[attribute]['expression_attribute_name']: attribute for attribute in new_attributes.keys()}
         except KeyError as error:
-            raise ValidationIncorrectAttributeError(data=error)
+            raise ValidationIncorrectAttributeError(data=error) from error
     
-    def generate_expression_attribute_values(self, new_attributes: dict, dynamodb_validation_format_mapper: dict) -> Dict[str, str] or Exception:
+    def generate_expression_attribute_values(self, new_attributes: dict,
+     dynamodb_validation_format_mapper: dict) -> Union[Dict[str, str], Exception]:
         """Generate a dict with expression attribute values to be used to update the item
 
         Args:
@@ -75,7 +79,7 @@ class DynamodbApi:
             return {self.expression_mapping[attribute]['expression_attribute_var']: 
             {dynamodb_validation_format_mapper[attribute]['dynamodb_type']: value} for attribute,value in new_attributes.items()}
         except KeyError as error:
-            raise ValidationIncorrectAttributeError(data=error)
+            raise ValidationIncorrectAttributeError(data=error) from error
 
 
     def push_update(self, key: dict, update_expression: str, expression_attribute_names: dict, expression_attribute_values: dict) -> Dict[str, str]:
@@ -90,23 +94,23 @@ class DynamodbApi:
         return response
     
 
-    def get_item(self, key: dict) -> Dict[str, str] or Exception:
+    def get_item(self, key: dict) -> Union[Dict[str, str], Exception]:
         try:
             return self.client.get_item(TableName=self.dynamodb_table, Key=key)["Item"]
         except KeyError:
-            raise DynamoDbWrongKeyError
+            raise DynamoDbWrongKeyError from KeyError
 
-    def get_items(self) -> List[Dict[str, str]] or Exception:
+    def get_items(self) -> Union[List[Dict[str, str]], Exception]:
         try:
             return self.client.scan(TableName=self.dynamodb_table)["Items"]
-        except self.client.exceptions.ResourceNotFoundException:
-           raise DynamoDbInvalidTableError
+        except self.client.exceptions.ResourceNotFoundException as error:
+            raise DynamoDbInvalidTableError from error
 
-    def remove_item(self, key: str) -> bool or Exception:
+    def remove_item(self, key: str) -> Union[bool, Exception]:
         try:
             self.client.delete_item(TableName=self.dynamodb_table,
             Key=key)
             return True
-        except ParamValidationError:
-            raise DynamoDbWrongKeyFormatError
+        except ParamValidationError as error:
+            raise DynamoDbWrongKeyFormatError from error
         

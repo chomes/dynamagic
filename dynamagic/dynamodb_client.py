@@ -1,20 +1,18 @@
-from dynamagic.modules.dynamodb_api import DynamodbApi
-from dynamagic.modules.validation import Validation
-import dynamagic.modules.exceptions as dynamodb_exceptions
 from schema import Schema
 from typing import Dict, List
-
+from dynamagic.modules.validation import Validation
+from dynamagic.modules.dynamodb_api import DynamodbApi
+import dynamagic.modules.exceptions as dynamodb_exceptions
 
 class DynamodbClient(DynamodbApi):
     def __init__(self, aws_region: str, dynamodb_table: str):
-        super.__init__(aws_region=aws_region, dynamodb_table=dynamodb_table)
+        super().__init__(aws_region=aws_region, dynamodb_table=dynamodb_table)
         self.validation = Validation()
     
     def validate_data(self, validation_type: str, unvalidated_data: Dict[str, str] or str) -> Dict[str, str]:
-            validation_schema: Schema = self.validation.validation_schema(validation_type=validation_type)
-            return self.validation.validate_item_data_entegrity(validation_schema=validation_schema, 
-            unvalidated_data=unvalidated_data)
-
+        validation_schema: Schema = self.validation.validation_schema(validation_type=validation_type)
+        return self.validation.validate_item_data_entegrity(dynamodb_schema=validation_schema,
+         unvalidated_item=unvalidated_data)
 
     def create_item(self, dynamodb_item: Dict[str, str]) -> Dict[str, int]:
         try:
@@ -42,27 +40,33 @@ class DynamodbClient(DynamodbApi):
             old_attributes=converted_existing_attributes)
 
     def generate_expressions(self, confirmed_new_attributes: Dict[str, str]) -> tuple:
-            update_expression: str = self.generate_update_expression(new_attributes=confirmed_new_attributes)
-            expression_attribute_names: Dict[str, str] = self.generate_expression_attribute_names(new_attributes=confirmed_new_attributes)
-            expression_attribute_values: Dict[str, str] = self.generate_expression_attribute_values(new_attributes=confirmed_new_attributes, 
-            dynamodb_validation_format_mapper=self.validation.dynamodb_format_mapper)
-            return update_expression, expression_attribute_names, expression_attribute_values
+        update_expression: str = self.generate_update_expression(new_attributes=confirmed_new_attributes)
+        expression_attribute_names: Dict[str, str] = self.generate_expression_attribute_names(new_attributes=confirmed_new_attributes)
+        expression_attribute_values: Dict[str, str] = self.generate_expression_attribute_values(new_attributes=confirmed_new_attributes, 
+        dynamodb_validation_format_mapper=self.validation.dynamodb_format_mapper)
+        return update_expression, expression_attribute_names, expression_attribute_values
     
     def confirm_item_updated(self, update_response: Dict[str, str], confirmed_new_attributes: Dict[str, str]) -> bool:
-            converted_attributes = self.validation.validate_item_to_db_format(dynamodb_item=confirmed_new_attributes)
-            return self.validation.validate_attributes_updated(response=update_response, validated_new_attributes=converted_attributes)
+        converted_attributes = self.validation.validate_item_to_db_format(dynamodb_item=confirmed_new_attributes)
+        return self.validation.validate_attributes_updated(response=update_response, validated_new_attributes=converted_attributes)
    
     def update_item(self, dynamodb_attributes: Dict[str, str]) -> Dict[str, int]:
         try:
-            validated_attributes: Dict[str, str] = self.validate_data(validation_type='update_item', unvalidated_data=dynamodb_attributes)
+            validated_attributes: Dict[str, str] = self.validate_data(validation_type='update_item',
+             unvalidated_data=dynamodb_attributes)
             key = validated_attributes.pop('CustomerId')
             removed_duplicated_attributes: Dict[str, str] = self.delete_existing_attributes(key=key, validated_attributes=validated_attributes)
-            validated_new_attributes: Dict[str, str] = self.validation.validate_new_attributes_exist(item_attributes=removed_duplicated_attributes)
-            update_expression, expression_attribute_names, expression_attribute_values = self.generate_expressions(confirmed_new_attributes=validated_new_attributes)
-            update_response: Dict[str, str] = self.push_update(key=key, update_expression=update_expression, 
-            expression_attribute_names=expression_attribute_names, expression_attribute_values=expression_attribute_values)
-            self.confirm_item_updated(update_response=update_response, confirmed_new_attributes=validated_new_attributes)
-            return {'staus_code': 200, 'message': f'Item with the key: {key} has been updated successfully'}
+            validated_new_attributes: Dict[str, str] = \
+            self.validation.validate_new_attributes_exist(item_attributes=removed_duplicated_attributes)
+            update_expression, expression_attribute_names, expression_attribute_values = \
+                self.generate_expressions(confirmed_new_attributes=validated_new_attributes)
+            update_response: Dict[str, str] = self.push_update(key=key, update_expression=update_expression,
+              expression_attribute_names=expression_attribute_names,
+               expression_attribute_values=expression_attribute_values)
+            self.confirm_item_updated(update_response=update_response,
+             confirmed_new_attributes=validated_new_attributes)
+            return {'staus_code': 200,
+             'message': f'Item with the key: {key} has been updated successfully'}
         except dynamodb_exceptions.DynamoDbWrongKeyError as error:
             return {'status_code': 400, 'message': str(error)}
         except dynamodb_exceptions.ValidationWrongSchemaTypeError as error:
@@ -106,8 +110,7 @@ class DynamodbClient(DynamodbApi):
             return {'status_Code': 400, 'message': str(error)}
         except dynamodb_exceptions.ValidationIncorrectKeyTypeError as error:
             return {'status_Code': 400, 'message': str(error)}
-
-  
+ 
     def delete_item(self, key: str) -> Dict[str, int]:
         try:
             validated_key = self.validate_data(validation_type='delete_item', unvalidated_data=key)
