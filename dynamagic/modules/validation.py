@@ -24,7 +24,8 @@ class Validation:
         """Grab a schema based on the validation you need to do
 
         Args:
-            validation_type (str): Provide a string with a validation type [new_item, update_item, delete_item]
+            validation_type (str): Provide a string with a validation type [new_item,
+             update_item, read_item, delete_item]
 
         Returns:
             Schema or Dict[str, int]: Return the schema you requested or a status code if you didn't give one of the 3 names.
@@ -39,7 +40,7 @@ class Validation:
         raise ValidationWrongSchemaTypeError(data=validation_type)
 
     @staticmethod
-    def validate_item_data_entegrity( dynamodb_schema: Schema, unvalidated_item: dict) -> Union[Dict[str, str], Exception]:
+    def validate_item_data_entegrity(dynamodb_schema: Schema, unvalidated_item: dict) -> Union[Dict[str, str], Exception]:
         try:
             return dynamodb_schema.validate(unvalidated_item)
         except SchemaWrongKeyError as error:
@@ -47,7 +48,7 @@ class Validation:
         except SchemaMissingKeyError as error:
             raise ValidationMissingKeyError(data=str(error).split()[2]) from error
         except SchemaError as error:
-            raise ValidationIncorrectKeyTypeError(data=str(error).split()[2]) from error
+            raise ValidationIncorrectKeyTypeError(data=str(error).split()[0]) from error
     
     def validate_item_to_db_format(self, dynamodb_item: dict) -> Dict[str, dict]:
         return {attribute: {self.dynamodb_format_mapper[attribute]['dynamodb_type']: value} for attribute, value in dynamodb_item.items()}
@@ -79,5 +80,5 @@ class Validation:
                 raise ValidationIncorrectAttributesError
 
             raise ValidationFailedAttributesUpdateError
-        except KeyError:
-            raise ValidationFailedAttributesUpdateError from KeyError
+        except KeyError as error:
+            raise ValidationFailedAttributesUpdateError from error

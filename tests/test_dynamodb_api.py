@@ -5,8 +5,9 @@ from moto import mock_dynamodb2
 import unittest
 
 class TestDynamodbApi(unittest.TestCase):
+    @staticmethod
     @mock_dynamodb2
-    def create_table(self):
+    def create_table():
         client = boto3.client('dynamodb', region_name='eu-west-2')
         client.create_table(
                 TableName='test_table',
@@ -178,7 +179,6 @@ class TestDynamodbApi(unittest.TestCase):
         'address': {'S': 'Jeff Bezos Candy land road'}, 'age': {'S': '38'}, 'car': {'S': 'Blue BMW'}})
         with self.assertRaises(DynamoDbWrongKeyFormatError):
             dynamodb_api.remove_item(key={'CustomerId': '1482328721'})
-
 
 
 if __name__ == '__main__':
