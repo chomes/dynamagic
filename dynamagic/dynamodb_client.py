@@ -16,7 +16,8 @@ class DynamodbClient(DynamodbApi):
             dynamodb_exceptions.ValidationIncorrectKeyTypeError,
              dynamodb_exceptions.ValidationIncorrectAttributeError,
               dynamodb_exceptions.ValidationFailedAttributesUpdateError,
-              dynamodb_exceptions.DynamoDbInvalidTableError)
+              dynamodb_exceptions.DynamoDbInvalidTableError,
+              dynamodb_exceptions.DynamoDbWrongKeyFormatError)
     
     def validate_data(self, validation_type: str,
      unvalidated_data: Union[Dict[str, str], str]) -> Union[Dict[str, str], str]:
@@ -26,16 +27,16 @@ class DynamodbClient(DynamodbApi):
 
     def create_item(self, dynamodb_item: Dict[str, str]) -> Dict[str, int]:
         try:
-            validated_item: Dict[str, str] = self.validate_data(validation_type='new_item',
+            validated_item: Dict[str, str] = self.validate_data(validation_type="new_item",
              unvalidated_data=dynamodb_item)
-            formated_db_item: Dict[str, dict] = self.validation.validate_item_to_db_format(validated_item)
+            formated_db_item: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(validated_item)
             self.add_item(dynamodb_item=formated_db_item)
-            return {'status_code': 200, 'message': f'Created new item with key: {validated_item["CustomerId"]}'}
+            return {"status_code": 200, "message": f"Created new item with key: {validated_item['CustomerId']}"}
         except self.client_exceptions as error:
-            return {'status_code': 400, 'message': str(error)}
+            return {"status_code": 400, "message": str(error)}
  
-    def delete_existing_attributes(self, key: str, validated_attributes: Dict[str, str]) -> Dict[str, str]:
-        existing_attributes: Dict[str, dict] = self.get_item(key=key)
+    def delete_existing_attributes(self, key: Dict[str, str], validated_attributes: Dict[str, str]) -> Dict[str, str]:
+        existing_attributes: Dict[str, Dict[str, str]] = self.get_item(key=key)
         converted_existing_attributes: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=existing_attributes)
         return self.remove_duplicated_attributes(new_attributes=validated_attributes,
             old_attributes=converted_existing_attributes)
@@ -55,9 +56,10 @@ class DynamodbClient(DynamodbApi):
    
     def update_item(self, dynamodb_attributes: Dict[str, str]) -> Dict[str, int]:
         try:
-            validated_attributes: Dict[str, str] = self.validate_data(validation_type='update_item',
+            validated_attributes: Dict[str, str] = self.validate_data(validation_type="update_item",
              unvalidated_data=dynamodb_attributes)
-            key: str = validated_attributes.pop('CustomerId')
+            key: Dict[str,
+             Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item={"CustomerId": validated_attributes.pop("CustomerId")})
             removed_duplicated_attributes: Dict[str, str] = self.delete_existing_attributes(key=key,
              validated_attributes=validated_attributes)
             validated_new_attributes: Dict[str, str] = self.validation.validate_new_attributes_exist(item_attributes=removed_duplicated_attributes)
@@ -67,18 +69,18 @@ class DynamodbClient(DynamodbApi):
                expression_attribute_values=expression_attribute_values)
             self.confirm_item_updated(update_response=update_response,
              confirmed_new_attributes=validated_new_attributes)
-            return {'staus_code': 200, 'message': f'Item with the key: {key} has been updated successfully'}
+            return {"staus_code": 200, "message": f"Item with the key: {key} has been updated successfully"}
         except self.client_exceptions as error:
-            return {'status_code': 400, 'message': str(error)}
+            return {"status_code": 400, "message": str(error)}
 
     def fetch_item(self, key: str) -> Dict[str, Union[int, Dict[str, str]]]:
         try:
-            validated_key: str = self.validate_data(validation_type='read_item', unvalidated_data=key)
+            validated_key: str = self.validate_data(validation_type="read_item", unvalidated_data=key)
             unformated_item: Dict[str, str] = self.get_item(key=validated_key)
             formated_item: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=unformated_item)
-            return {'status_code': 200, 'message': formated_item}
+            return {"status_code": 200, "message": formated_item}
         except self.client_exceptions as error:
-            return {'status_Code': 400, 'message': str(error)}
+            return {"status_Code": 400, "message": str(error)}
     
     def get_items(self) -> Dict[str, Union[int, List[Dict[str, str]]]]:
         try:
@@ -86,15 +88,15 @@ class DynamodbClient(DynamodbApi):
             formated_table_items: List[Dict[str, str]] = \
             [self.validation.validate_item_to_readable_format(table_item) \
                 for table_item in unformated_table_items]
-            return {'status_code': 200, 'message': formated_table_items}
+            return {"status_code": 200, "message": formated_table_items}
         except self.client_exceptions as error:
-            return {'status_Code': 400, 'message': str(error)}
+            return {"status_Code": 400, "message": str(error)}
 
     def delete_item(self, key: str) -> Dict[str, int]:
         try:
-            validated_key = self.validate_data(validation_type='delete_item', unvalidated_data=key)
+            validated_key = self.validate_data(validation_type="delete_item", unvalidated_data=key)
             self.remove_item(key=validated_key)
-            return {'status_code': 200,
-             'message': f'Item with key: {validated_key} has been deleted'}
+            return {"status_code": 200,
+             "message": f"Item with key: {validated_key} has been deleted"}
         except self.client_exceptions as error:
-            return {'status_Code': 400, 'message': str(error)}
+            return {"status_Code": 400, "message": str(error)}

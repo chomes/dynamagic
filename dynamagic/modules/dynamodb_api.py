@@ -8,12 +8,12 @@ from dynamagic.modules.exceptions import DynamoDbWrongKeyError, ValidationIncorr
 class DynamodbApi:
     def __init__(self, aws_region: str, dynamodb_table: str) -> None:
         self.aws_region = aws_region
-        self.client = boto3.client('dynamodb', region_name=aws_region)
+        self.client = boto3.client("dynamodb", region_name=aws_region)
         self.dynamodb_table = dynamodb_table
-        self.expression_mapping: Dict[str, Dict[str, str]] = {'name': {'expression_attribute_name': '#N', 'expression_attribute_var': ":n"},
-        'address': {'expression_attribute_name': '#AD', 'expression_attribute_var': ':ad'},
-        'age': {'expression_attribute_name': '#AG', 'expression_attribute_var': ':ag'},
-        'car': {'expression_attribute_name': '#C', 'expression_attribute_var': ':c'}} 
+        self.expression_mapping: Dict[str, Dict[str, str]] = {"name": {"expression_attribute_name": "#N", "expression_attribute_var": ":n"},
+        "address": {"expression_attribute_name": "#AD", "expression_attribute_var": ":ad"},
+        "age": {"expression_attribute_name": "#AG", "expression_attribute_var": ":ag"},
+        "car": {"expression_attribute_name": "#C", "expression_attribute_var": ":c"}} 
     
     def add_item(self, dynamodb_item: Dict[str, Dict[str, str]]) -> Union[bool, Exception]:
         try:
@@ -24,6 +24,8 @@ class DynamodbApi:
             return True
         except self.client.exceptions.ClientError as error:
             raise DynamoDbWrongKeyError from error
+        except ParamValidationError as error:
+            raise DynamoDbWrongKeyFormatError from error
     
     @staticmethod
     def remove_duplicated_attributes(new_attributes: Dict[str, str], old_attributes: Dict[str, str]) -> Union[Dict[str, str], Exception]:
@@ -44,15 +46,15 @@ class DynamodbApi:
         update_expression = str()
         try:
             for attribute in new_attributes.keys():
-                if update_expression.startswith('SET'):
+                if update_expression.startswith("SET"):
                     pass
                 else:
-                    update_expression = f'SET {self.expression_mapping[attribute]["expression_attribute_name"]} = {self.expression_mapping[attribute]["expression_attribute_var"]}'
+                    update_expression = f"SET {self.expression_mapping[attribute]['expression_attribute_name']} = {self.expression_mapping[attribute]['expression_attribute_var']}"
 
-                if update_expression.endswith(self.expression_mapping[attribute]['expression_attribute_var']):
+                if update_expression.endswith(self.expression_mapping[attribute]["expression_attribute_var"]):
                     continue
                 else:
-                    update_expression += f', {self.expression_mapping[attribute]["expression_attribute_name"]} = {self.expression_mapping[attribute]["expression_attribute_var"]}'
+                    update_expression += f", {self.expression_mapping[attribute]['expression_attribute_name']} = {self.expression_mapping[attribute]['expression_attribute_var']}"
             
             return update_expression
         except KeyError as error:
@@ -60,7 +62,7 @@ class DynamodbApi:
 
     def generate_expression_attribute_names(self, new_attributes: dict) -> Union[Dict[str, str], Exception]:
         try:
-            return {self.expression_mapping[attribute]['expression_attribute_name']: attribute for attribute in new_attributes.keys()}
+            return {self.expression_mapping[attribute]["expression_attribute_name"]: attribute for attribute in new_attributes.keys()}
         except KeyError as error:
             raise ValidationIncorrectAttributeError(data=error) from error
     
@@ -76,8 +78,8 @@ class DynamodbApi:
             Dict[str, str]: Dictionary with attribute values generated
         """
         try:
-            return {self.expression_mapping[attribute]['expression_attribute_var']: 
-            {dynamodb_validation_format_mapper[attribute]['dynamodb_type']: value} for attribute,value in new_attributes.items()}
+            return {self.expression_mapping[attribute]["expression_attribute_var"]: 
+            {dynamodb_validation_format_mapper[attribute]["dynamodb_type"]: value} for attribute,value in new_attributes.items()}
         except KeyError as error:
             raise ValidationIncorrectAttributeError(data=error) from error
 
@@ -97,8 +99,8 @@ class DynamodbApi:
     def get_item(self, key: dict) -> Union[Dict[str, str], Exception]:
         try:
             return self.client.get_item(TableName=self.dynamodb_table, Key=key)["Item"]
-        except KeyError:
-            raise DynamoDbWrongKeyError from KeyError
+        except KeyError as error:
+            raise DynamoDbWrongKeyError from error
 
     def get_items(self) -> Union[List[Dict[str, str]], Exception]:
         try:
