@@ -19,12 +19,29 @@ class DynamodbClient(DynamodbApi):
               dynamodb_exceptions.DynamoDbWrongKeyFormatError)
     
     def validate_data(self, validation_type: str,
-     unvalidated_data: Union[Dict[str, str], str]) -> Union[Dict[str, str], str]:
+     unvalidated_data: Dict[str, str]) -> Dict[str, str]:
+        """Designed to validate the data using the validation_schema in the validation module
+
+        Args:
+            validation_type (str): Choose between ['new_item', 'update_item', 'delete_item', 'read_item']
+            unvalidated_data (Dict[str, str]): The attributes for the item you want to validate are correct
+
+        Returns:
+            Dict[str, str]: Validated data with the correct format
+        """
         validation_schema: Schema = self.validation.validation_schema(validation_type=validation_type)
         return self.validation.validate_item_data_entegrity(dynamodb_schema=validation_schema,
          unvalidated_item=unvalidated_data)
 
     def create_item(self, dynamodb_item: Dict[str, str]) -> Dict[str, int]:
+        """Create a new item on the table
+
+        Args:
+            dynamodb_item (Dict[str, str]): Attributes for the item, must include the key specified on your table.
+
+        Returns:
+            Dict[str, int]: Status code of the results of the action
+        """
         try:
             validated_item: Dict[str, str] = self.validate_data(validation_type="new_item",
              unvalidated_data=dynamodb_item)
@@ -35,12 +52,29 @@ class DynamodbClient(DynamodbApi):
             return {"status_code": 400, "message": str(error)}
  
     def delete_existing_attributes(self, key: Dict[str, str], validated_attributes: Dict[str, str]) -> Dict[str, str]:
+        """Deletes any attributes that are the same as the old ones, used for update_item
+
+        Args:
+            key (Dict[str, str]): The key for the existing item
+            validated_attributes (Dict[str, str]): Attributes that you want to update, parse in validated attributes only
+
+        Returns:
+            Dict[str, str]: Returns attributes that are only new
+        """
         existing_attributes: Dict[str, Dict[str, str]] = self.get_item(key=key)
         converted_existing_attributes: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=existing_attributes)
         return self.remove_duplicated_attributes(new_attributes=validated_attributes,
             old_attributes=converted_existing_attributes)
 
     def generate_expressions(self, confirmed_new_attributes: Dict[str, str]) -> Tuple[str, Dict[str, str]]:
+        """Used to generate expressions required to update an item in dynamodb
+
+        Args:
+            confirmed_new_attributes (Dict[str, str]): Only parse in the attributes after you've used delete_existing_attributes
+
+        Returns:
+            Tuple[str, Dict[str, str]]: Returns the update_expression string, attribute_names and attribute_values
+        """
         update_expression: str = self.generate_update_expression(new_attributes=confirmed_new_attributes)
         expression_attribute_names: Dict[str, str] = self.generate_expression_attribute_names(new_attributes=confirmed_new_attributes)
         expression_attribute_values: Dict[str, str] = self.generate_expression_attribute_values(new_attributes=confirmed_new_attributes,
@@ -49,11 +83,29 @@ class DynamodbClient(DynamodbApi):
     
     def confirm_item_updated(self, update_response: Dict[str, Dict[str, str]],
      confirmed_new_attributes: Dict[str, str]) -> Union[bool, Exception]:
+        """Validates that the item has been updated successfully after you've pushed it through the database
+
+        Args:
+            update_response (Dict[str, Dict[str, str]]): The response from the database after you've made the change
+            confirmed_new_attributes (Dict[str, str]): Parse in the attributes after using delete_existing_attributes
+
+        Returns:
+            Union[bool, Exception]: Returns if it's True or raises an exception if it fails to update
+        """
+
         formated_attributes: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=confirmed_new_attributes)
         return self.validation.validate_attributes_updated(response=update_response,
          validated_new_attributes=formated_attributes)
    
     def update_item(self, dynamodb_attributes: Dict[str, str]) -> Dict[str, int]:
+        """Updates an existing item to the database
+
+        Args:
+            dynamodb_attributes (Dict[str, str]): Provide your key along with the attribute names you want to update
+
+        Returns:
+            Dict[str, int]: Returns a status code and a message telling you if it passed or failed
+        """
         try:
             validated_attributes: Dict[str, str] = self.validate_data(validation_type="update_item",
              unvalidated_data=dynamodb_attributes)
@@ -74,6 +126,14 @@ class DynamodbClient(DynamodbApi):
 
 
     def fetch_item(self, key: Dict[str, str]) -> Dict[str, Union[int, Dict[str, str]]]:
+        """Get an existing item from the database
+
+        Args:
+            key (Dict[str, str]): They key for the item in the database
+
+        Returns:
+            Dict[str, Union[int, Dict[str, str]]]: Returns the status code and the item or the error why it failed
+        """
         try:
             validated_key: Dict[str, str] = self.validate_data(validation_type="read_item", unvalidated_data=key)
             formated_key: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=validated_key)
@@ -83,7 +143,12 @@ class DynamodbClient(DynamodbApi):
         except self.client_exceptions as error:
             return {"status_code": 400, "message": str(error)}
     
-    def fetch_items(self) -> Dict[str, Union[int, List[Dict[str, str]]]]:
+    def fetch_items(self) -> Dict[str, Union[int, Union[str, List[Dict[str, str]]]]]:
+        """Fetch a bulk amount of items from the database
+
+        Returns:
+            Dict[str, Union[int, Union[str, List[Dict[str, str]]]]]: Returns either a status code with a list of dictionaries or an error message
+        """
         try:
             unformated_table_items: List[Dict[str, Dict[str, str]]] = self.get_items()
             formated_table_items: List[Dict[str, str]] = [self.validation.validate_item_to_readable_format(table_item) \
@@ -93,6 +158,14 @@ class DynamodbClient(DynamodbApi):
             return {"status_code": 400, "message": str(error)}
 
     def delete_item(self, key: Dict[str, str]) -> Dict[str, int]:
+        """Delete an existing item from the database
+
+        Args:
+            key (Dict[str, str]): The key for the item in the database
+
+        Returns:
+            Dict[str, int]: Returns a status code either passing or failing.
+        """
         try:
             validated_key: Dict[str, str] = self.validate_data(validation_type="delete_item", unvalidated_data=key)
             formated_key: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=validated_key)

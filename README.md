@@ -9,7 +9,7 @@ We recommend python 3.8 and above but it **should** run on python 3.6 at a minim
 
 ## What is included in the programme
 
-* Tests for each method (Although some error messages are not tested as I can't reproduce them, volunteers for options are welcome!)
+* Tests for each method
 * CRUD operations for dynamoDB
 ## What we aim to achieve
 
@@ -28,3 +28,45 @@ We recommend python 3.8 and above but it **should** run on python 3.6 at a minim
 * boto3
 * unittest
 * time
+
+## How to use
+
+It is recommended to use the dynamodb_client for anything to do with lambda functions.  
+Even using as a python module we still would recommend the client as it would handle error checking and exceptions on your behalf however the dynamodb_api module can work just as well.
+
+To use this module you should have your iam credentials parsed as environment variables in your venv/bin/activate file like this
+
+```bash
+export AWS_ACCESS_KEY_ID=KEY_ID
+export AWS_SECRET_ACCESS_KEY=ACCESS_KEY
+export AWS_DEFAULT_REGION=eu-west-2
+```
+
+Once done you then need to instantiate the class
+
+```python
+from dynamagic.dynamodb_client.py import DynamodbClient
+
+dynamodb_client: DynamodbClient = DynamodbClient(aws_region="eu-west-2",
+dynamodb_table="Accounts")
+```
+
+Now you can create items on this table
+
+```python
+dynamodb_client.create_item(dynamodb_item={
+                "CustomerId": "1482328791",
+                "name": "James Joseph",
+                "address": "Jeff Bezos Candy land road",
+                "age": "32",
+                "car": "Black Skoda",
+            })
+{"status_code": 200,
+             "message": "Created new item with key: 1482328791"}
+```
+For examples on how to use the modules, please view the tests for the correct format and structures of everything.
+
+## Raising bugs / Feature requests
+
+See a bug in the code?  Want something added?  Raise an issue with the problem / use case and I'll see if I can add it to the module when possible.
+
