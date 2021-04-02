@@ -1,5 +1,10 @@
 import dynamagic.modules.exceptions as dynamodb_exceptions
-from schema import Schema
+try:
+    from schema import Schema
+except ModuleNotFoundError:
+    pass
+    # from dynamagic.modules.schema import Schema
+
 from typing import Dict, List, Union, Tuple
 from dynamagic.modules.validation import Validation
 from dynamagic.modules.dynamodb_api import DynamodbApi

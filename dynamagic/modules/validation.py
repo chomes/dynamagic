@@ -1,13 +1,25 @@
 from typing import Dict, Union
-from schema import (
-    Schema,
-    And,
-    SchemaError,
-    SchemaMissingKeyError,
-    SchemaWrongKeyError,
-    Use,
-    Optional,
-)
+try:
+    from schema import (
+        Schema,
+        And,
+        SchemaError,
+        SchemaMissingKeyError,
+        SchemaWrongKeyError,
+        Use,
+        Optional,
+    )
+except ModuleNotFoundError:
+    pass
+    # from dynamagic.modules.schema import (
+    #     Schema,
+    #     And,
+    #     SchemaError,
+    #     SchemaMissingKeyError,
+    #     SchemaWrongKeyError,
+    #     Use,
+    #     Optional,
+    # )
 from dynamagic.modules.exceptions import (
     ValidationFailedAttributesUpdateError,
     ValidationIncorrectAttributesError,

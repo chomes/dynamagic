@@ -21,13 +21,52 @@ We recommend python 3.8 and above but it **should** run on python 3.6 at a minim
 
 * boto3
 * time
+* [schema](https://pypi.org/project/schema/)
 
 ## Required to test
 
-* moto - http://docs.getmoto.org/en/latest/
+* [moto](http://docs.getmoto.org/en/latest/)
+* [schema](https://pypi.org/project/schema/)
 * boto3
 * unittest
 * time
+
+**IMPORTANT** Please note that if you plan to use this in a lambda we recommend cloning the schema module and putting it in the modules folder then un-comment these sections and delete the passes
+in dynamodb_client and validation like these examples:
+
+modules/validation.py
+
+```python
+try:
+    from schema import (
+        Schema,
+        And,
+        SchemaError,
+        SchemaMissingKeyError,
+        SchemaWrongKeyError,
+        Use,
+        Optional,
+    )
+except ModuleNotFoundError:
+    from dynamagic.modules.schema import (
+        Schema,
+        And,
+        SchemaError,
+        SchemaMissingKeyError,
+        SchemaWrongKeyError,
+        Use,
+        Optional,
+    )
+```
+
+dynamodb_client.py
+
+```python
+try:
+    from schema import Schema
+except ModuleNotFoundError:
+    from dynamagic.modules.schema import Schema
+```
 
 ## How to use
 
@@ -66,7 +105,25 @@ dynamodb_client.create_item(dynamodb_item={
 ```
 For examples on how to use the modules, please view the tests for the correct format and structures of everything.
 
+## Customising your schema and data
+
+If you want different fields then what we have set (Hopefully you do, these are just place holders :) ) edit the modules/validation.py file dynamodb_client.py
+
+### Schemas
+* new_item_schema
+* update_item_schema
+* dynamodb_key_schema
+
+Please change these to have your key and attributes you want to support.  I have set the schema to be based on a string that checks if it's an int and also if the string is 10 characters long.  This is based off of the [schema module](https://pypi.org/project/schema/)
+
+### Format
+In the validation module you'll see a var called dynamodb_format_mapper
+This is dict of dicts that has the format for how items should be added into the database.  Please check this to your attributes that you want to support and the correct format based on dynamodb's standard for examples see boto3's put item for attribute formats [here](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.put_item)
+
+### Key vars
+
+In the dynamodb_client.py file I have used the key name from the standard a few times, you will need to replace CustomerId with your own key otherwise this will fail.
+
 ## Raising bugs / Feature requests
 
 See a bug in the code?  Want something added?  Raise an issue with the problem / use case and I'll see if I can add it to the module when possible.
-
