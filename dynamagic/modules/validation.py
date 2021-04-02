@@ -20,7 +20,7 @@ from dynamagic.modules.exceptions import (
 
 
 class Validation:
-    def __init__(self, aws_region: str or None = None):
+    def __init__(self) -> None:
         self.new_item_schema = Schema(
             {
                 "CustomerId": And(
@@ -51,7 +51,6 @@ class Validation:
         self.dynamodb_key_schema = Schema(
             {"CustomerId": And(Use(str), lambda client_id: len(client_id) == 10)}
         )
-        self.aws_region = aws_region
 
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
         """Grab a schema based on the validation you need to do

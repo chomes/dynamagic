@@ -1,5 +1,4 @@
 import dynamagic.modules.exceptions as dynamodb_exceptions
-
 from schema import Schema
 from typing import Dict, List, Union, Tuple
 from dynamagic.modules.validation import Validation
@@ -73,30 +72,31 @@ class DynamodbClient(DynamodbApi):
         except self.client_exceptions as error:
             return {"status_code": 400, "message": str(error)}
 
-    def fetch_item(self, key: str) -> Dict[str, Union[int, Dict[str, str]]]:
+    def fetch_item(self, key: Dict[str, str]) -> Dict[str, Union[int, Dict[str, str]]]:
         try:
-            validated_key: str = self.validate_data(validation_type="read_item", unvalidated_data=key)
-            unformated_item: Dict[str, str] = self.get_item(key=validated_key)
-            formated_item: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=unformated_item)
-            return {"status_code": 200, "message": formated_item}
+            validated_key: Dict[str, str] = self.validate_data(validation_type="read_item", unvalidated_data=key)
+            formated_key: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=validated_key)
+            fetched_item: Dict[str, str] = self.get_item(key=formated_key)
+            readable_item: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=fetched_item)
+            return {"status_code": 200, "message": readable_item}
         except self.client_exceptions as error:
             return {"status_Code": 400, "message": str(error)}
     
     def get_items(self) -> Dict[str, Union[int, List[Dict[str, str]]]]:
         try:
             unformated_table_items: List[Dict[str, str]] = self.get_items()
-            formated_table_items: List[Dict[str, str]] = \
-            [self.validation.validate_item_to_readable_format(table_item) \
+            formated_table_items: List[Dict[str, str]] = [self.validation.validate_item_to_readable_format(table_item) \
                 for table_item in unformated_table_items]
             return {"status_code": 200, "message": formated_table_items}
         except self.client_exceptions as error:
             return {"status_Code": 400, "message": str(error)}
 
-    def delete_item(self, key: str) -> Dict[str, int]:
+    def delete_item(self, key: Dict[str, str]) -> Dict[str, int]:
         try:
-            validated_key = self.validate_data(validation_type="delete_item", unvalidated_data=key)
-            self.remove_item(key=validated_key)
+            validated_key: Dict[str, str] = self.validate_data(validation_type="delete_item", unvalidated_data=key)
+            formated_key: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=validated_key)
+            self.remove_item(key=formated_key)
             return {"status_code": 200,
-             "message": f"Item with key: {validated_key} has been deleted"}
+             "message": f"Item with key: {validated_key['CustomerId']} has been deleted"}
         except self.client_exceptions as error:
             return {"status_Code": 400, "message": str(error)}

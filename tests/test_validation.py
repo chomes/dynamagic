@@ -16,14 +16,6 @@ class TestValidation(unittest.TestCase):
         validation = Validation()
         self.assertIsInstance(validation, Validation)
 
-    def test_validation_class_empty_aws_region(self):
-        validation = Validation()
-        self.assertEqual(validation.aws_region, None)
-
-    def test_validation_class_aws_region_string(self):
-        validation = Validation(aws_region="eu-west-2")
-        self.assertIsInstance(validation.aws_region, str)
-
     def test_validation_schema_new_item(self):
         validation: Validation = Validation()
         self.assertEqual(
