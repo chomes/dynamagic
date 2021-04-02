@@ -110,7 +110,7 @@ class Validation:
 
     @staticmethod
     def validate_attributes_updated(
-        response: Dict[str, str], validated_new_attributes: Dict[str, str]
+        response: Dict[str, Dict[str,str]], validated_new_attributes: Dict[str, Dict[str, str]]
     ) -> Union[bool, Exception]:
         """Validate that the attributes required to be updated have been updated by comparing the response dictionary to the converted attributes dictionary
 
@@ -126,7 +126,5 @@ class Validation:
                 return True
             if response["Attributes"] != validated_new_attributes:
                 raise ValidationIncorrectAttributesError
-
-            raise ValidationFailedAttributesUpdateError
         except KeyError as error:
             raise ValidationFailedAttributesUpdateError from error

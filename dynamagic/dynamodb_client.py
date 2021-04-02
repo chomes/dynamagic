@@ -47,11 +47,11 @@ class DynamodbClient(DynamodbApi):
          dynamodb_validation_format_mapper=self.validation.dynamodb_format_mapper)
         return update_expression, expression_attribute_names, expression_attribute_values
     
-    def confirm_item_updated(self, update_response: Dict[str, str],
+    def confirm_item_updated(self, update_response: Dict[str, Dict[str, str]],
      confirmed_new_attributes: Dict[str, str]) -> Union[bool, Exception]:
-        converted_attributes: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=confirmed_new_attributes)
+        formated_attributes: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(dynamodb_item=confirmed_new_attributes)
         return self.validation.validate_attributes_updated(response=update_response,
-         validated_new_attributes=converted_attributes)
+         validated_new_attributes=formated_attributes)
    
     def update_item(self, dynamodb_attributes: Dict[str, str]) -> Dict[str, int]:
         try:
@@ -68,9 +68,10 @@ class DynamodbClient(DynamodbApi):
                expression_attribute_values=expression_attribute_values)
             self.confirm_item_updated(update_response=update_response,
              confirmed_new_attributes=validated_new_attributes)
-            return {"staus_code": 200, "message": f"Item with the key: {key} has been updated successfully"}
+            return {"staus_code": 200, "message": f"Item with the key provided has been updated successfully"}
         except self.client_exceptions as error:
             return {"status_code": 400, "message": str(error)}
+
 
     def fetch_item(self, key: Dict[str, str]) -> Dict[str, Union[int, Dict[str, str]]]:
         try:
@@ -80,16 +81,16 @@ class DynamodbClient(DynamodbApi):
             readable_item: Dict[str, str] = self.validation.validate_item_to_readable_format(dynamodb_item=fetched_item)
             return {"status_code": 200, "message": readable_item}
         except self.client_exceptions as error:
-            return {"status_Code": 400, "message": str(error)}
+            return {"status_code": 400, "message": str(error)}
     
-    def get_items(self) -> Dict[str, Union[int, List[Dict[str, str]]]]:
+    def fetch_items(self) -> Dict[str, Union[int, List[Dict[str, str]]]]:
         try:
-            unformated_table_items: List[Dict[str, str]] = self.get_items()
+            unformated_table_items: List[Dict[str, Dict[str, str]]] = self.get_items()
             formated_table_items: List[Dict[str, str]] = [self.validation.validate_item_to_readable_format(table_item) \
                 for table_item in unformated_table_items]
             return {"status_code": 200, "message": formated_table_items}
         except self.client_exceptions as error:
-            return {"status_Code": 400, "message": str(error)}
+            return {"status_code": 400, "message": str(error)}
 
     def delete_item(self, key: Dict[str, str]) -> Dict[str, int]:
         try:
@@ -99,4 +100,4 @@ class DynamodbClient(DynamodbApi):
             return {"status_code": 200,
              "message": f"Item with key: {validated_key['CustomerId']} has been deleted"}
         except self.client_exceptions as error:
-            return {"status_Code": 400, "message": str(error)}
+            return {"status_code": 400, "message": str(error)}
