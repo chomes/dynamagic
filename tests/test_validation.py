@@ -222,9 +222,7 @@ class TestValidation(unittest.TestCase):
         self.assertTrue(
             validation.validate_attributes_updated(
                 response={
-                    "Attributes": {"age": {"S": "32"},
-                     "car": {"S": "Black Skoda"}
-                     }
+                    "Attributes": {"age": {"S": "32"}, "car": {"S": "Black Skoda"}}
                 },
                 validated_new_attributes={
                     "age": {"S": "32"},
@@ -238,14 +236,8 @@ class TestValidation(unittest.TestCase):
         self.assertRaises(
             ValidationIncorrectAttributesError,
             validation.validate_attributes_updated,
-            response={"Attributes": {"age": {"S": "32"},
-             "car": {"S": "Black Skoda"}
-             }
-             },
-            validated_new_attributes={
-                "age": {"S": "35"},
-                 "car": {"S": "Blue BMW"}
-                 },
+            response={"Attributes": {"age": {"S": "32"}, "car": {"S": "Black Skoda"}}},
+            validated_new_attributes={"age": {"S": "35"}, "car": {"S": "Blue BMW"}},
         )
 
     def test_validate_attributes_failed_to_update(self):
@@ -254,10 +246,7 @@ class TestValidation(unittest.TestCase):
             ValidationFailedAttributesUpdateError,
             validation.validate_attributes_updated,
             response={},
-            validated_new_attributes={
-                "age": {"S": "32"},
-                 "car": {"S": "Black Skoda"}
-                 },
+            validated_new_attributes={"age": {"S": "32"}, "car": {"S": "Black Skoda"}},
         )
 
 
