@@ -1,4 +1,5 @@
 from typing import Dict, Union
+
 try:
     from schema import (
         Schema,
@@ -122,7 +123,8 @@ class Validation:
 
     @staticmethod
     def validate_attributes_updated(
-        response: Dict[str, Dict[str,str]], validated_new_attributes: Dict[str, Dict[str, str]]
+        response: Dict[str, Dict[str, str]],
+        validated_new_attributes: Dict[str, Dict[str, str]],
     ) -> Union[bool, Exception]:
         """Validate that the attributes required to be updated have been updated by comparing the response dictionary to the converted attributes dictionary
 
