@@ -193,7 +193,7 @@ class DynamodbClient(DynamodbApi):
             )
             return {
                 "statusCode": 200,
-                "message": f"Item with the key provided has been updated successfully",
+                "message": "Item with the key provided has been updated successfully",
             }
         except self.client_exceptions as error:
             return {"statusCode": 400, "message": str(error)}
