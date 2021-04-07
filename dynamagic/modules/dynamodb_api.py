@@ -62,8 +62,8 @@ class DynamodbApi:
             raise ValidationIncorrectAttributeError(data=error) from error
 
     def generate_update_expression(
-        self, new_attributes: dict
-    ) -> str or Dict[str, str] or Exception:
+        self, new_attributes: Dict[str, str]
+    ) -> Union[str, Exception]:
         update_expression = str()
         try:
             for attribute in new_attributes.keys():
@@ -84,7 +84,7 @@ class DynamodbApi:
             raise ValidationIncorrectAttributeError(data=error) from error
 
     def generate_expression_attribute_names(
-        self, new_attributes: dict
+        self, new_attributes: Dict[str, str]
     ) -> Union[Dict[str, str], Exception]:
         try:
             return {
@@ -97,16 +97,19 @@ class DynamodbApi:
             raise ValidationIncorrectAttributeError(data=error) from error
 
     def generate_expression_attribute_values(
-        self, new_attributes: dict, dynamodb_validation_format_mapper: dict
-    ) -> Union[Dict[str, str], Exception]:
+        self,
+        new_attributes: Dict[str, str],
+        dynamodb_validation_format_mapper: Dict[str, Dict[str, str]],
+    ) -> Union[Dict[str, Dict[str, str]], Exception]:
         """Generate a dict with expression attribute values to be used to update the item
 
         Args:
-            new_attributes (dict): New attributes that will be updated
-            dynamodb_validation_format_mapper (dict): The format mapper from the validation class
+            new_attributes (Dict[str, str]): New attributes that will be updated
+            dynamodb_validation_format_mapper (Dict[str, Dict[str, str]]): The format mapper from the validation class
 
         Returns:
-            Dict[str, str]: Dictionary with attribute values generated
+            Union[Dict[str, Dict[str, str]], Exception]: Dictionary with attributes based on expressions or
+            a Exception is raised if this fails.
         """
         try:
             return {
@@ -120,10 +123,10 @@ class DynamodbApi:
 
     def push_update(
         self,
-        key: dict,
+        key: Dict[str, Dict[str, str]],
         update_expression: str,
-        expression_attribute_names: dict,
-        expression_attribute_values: dict,
+        expression_attribute_names: Dict[str, str],
+        expression_attribute_values: Dict[str, Dict[str, str]],
     ) -> Dict[str, str]:
         response: dict = self.client.update_item(
             TableName=self.dynamodb_table,
@@ -135,7 +138,9 @@ class DynamodbApi:
         )
         return response
 
-    def get_item(self, key: dict) -> Union[Dict[str, str], Exception]:
+    def get_item(
+        self, key: Dict[str, Dict[str, str]]
+    ) -> Union[Dict[str, str], Exception]:
         try:
             return self.client.get_item(TableName=self.dynamodb_table, Key=key)["Item"]
         except KeyError as error:

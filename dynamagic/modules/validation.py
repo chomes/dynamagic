@@ -66,15 +66,6 @@ class Validation:
         )
 
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
-        """Grab a schema based on the validation you need to do
-
-        Args:
-            validation_type (str): Provide a string with a validation type [new_item,
-             update_item, read_item, delete_item]
-
-        Returns:
-            Schema or Dict[str, int]: Return the schema you requested or a status code if you didn"t give one of the 3 names.
-        """
         if validation_type == "new_item":
             return self.new_item_schema
         if validation_type == "update_item":
@@ -129,11 +120,11 @@ class Validation:
         """Validate that the attributes required to be updated have been updated by comparing the response dictionary to the converted attributes dictionary
 
         Args:
-            response (dict): Response output from the push_update method \
-            validated_new_attributes (dict): new_attributes that have been converted by using the validate_item_to_db_format
+            response (Dict[str, Dict[str, str]]): Response output from the push_update method \
+            validated_new_attributes (Dict[str, Dict[str, str]]): new_attributes that have been converted by using the validate_item_to_db_format
 
         Returns:
-            Dict[str, int]: Generated response code
+            Union[bool, Exception]: Returns True if the response data is correct or raises Exception if failed
         """
         try:
             if response["Attributes"] == validated_new_attributes:
