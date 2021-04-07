@@ -65,10 +65,10 @@ class DynamodbClient(DynamodbApi):
             self.add_item(dynamodb_item=formated_db_item)
             return {
                 "statusCode": 200,
-                "message": f"Created new item with key: {validated_item['CustomerId']}",
+                "body": f"Created new item with key: {validated_item['CustomerId']}",
             }
         except self.client_exceptions as error:
-            return {"statusCode": 400, "message": str(error)}
+            return {"statusCode": 400, "body": str(error)}
 
     def delete_existing_attributes(
         self, key: Dict[str, str], validated_attributes: Dict[str, str]
@@ -155,7 +155,7 @@ class DynamodbClient(DynamodbApi):
             dynamodb_attributes (Dict[str, str]): Provide your key along with the attribute names you want to update
 
         Returns:
-            Dict[str, int]: Returns a status code and a message telling you if it passed or failed
+            Dict[str, int]: Returns a status code and a body telling you if it passed or failed
         """
         try:
             validated_attributes: Dict[str, str] = self.validate_data(
@@ -193,10 +193,10 @@ class DynamodbClient(DynamodbApi):
             )
             return {
                 "statusCode": 200,
-                "message": "Item with the key provided has been updated successfully",
+                "body": "Item with the key provided has been updated successfully",
             }
         except self.client_exceptions as error:
-            return {"statusCode": 400, "message": str(error)}
+            return {"statusCode": 400, "body": str(error)}
 
     def fetch_item(self, key: Dict[str, str]) -> Dict[str, Union[int, Dict[str, str]]]:
         """Get an existing item from the database
@@ -220,15 +220,15 @@ class DynamodbClient(DynamodbApi):
             ] = self.validation.validate_item_to_readable_format(
                 dynamodb_item=fetched_item
             )
-            return {"statusCode": 200, "message": readable_item}
+            return {"statusCode": 200, "body": readable_item}
         except self.client_exceptions as error:
-            return {"statusCode": 400, "message": str(error)}
+            return {"statusCode": 400, "body": str(error)}
 
     def fetch_items(self) -> Dict[str, Union[int, Union[str, List[Dict[str, str]]]]]:
         """Fetch a bulk amount of items from the database
 
         Returns:
-            Dict[str, Union[int, Union[str, List[Dict[str, str]]]]]: Returns either a status code with a list of dictionaries or an error message
+            Dict[str, Union[int, Union[str, List[Dict[str, str]]]]]: Returns either a status code with a list of dictionaries or an error body
         """
         try:
             unformated_table_items: List[Dict[str, Dict[str, str]]] = self.get_items()
@@ -236,9 +236,9 @@ class DynamodbClient(DynamodbApi):
                 self.validation.validate_item_to_readable_format(table_item)
                 for table_item in unformated_table_items
             ]
-            return {"statusCode": 200, "message": formated_table_items}
+            return {"statusCode": 200, "body": formated_table_items}
         except self.client_exceptions as error:
-            return {"statusCode": 400, "message": str(error)}
+            return {"statusCode": 400, "body": str(error)}
 
     def delete_item(self, key: Dict[str, str]) -> Dict[str, int]:
         """Delete an existing item from the database
@@ -259,7 +259,7 @@ class DynamodbClient(DynamodbApi):
             self.remove_item(key=formated_key)
             return {
                 "statusCode": 200,
-                "message": f"Item with key: {validated_key['CustomerId']} has been deleted",
+                "body": f"Item with key: {validated_key['CustomerId']} has been deleted",
             }
         except self.client_exceptions as error:
-            return {"statusCode": 400, "message": str(error)}
+            return {"statusCode": 400, "body": str(error)}

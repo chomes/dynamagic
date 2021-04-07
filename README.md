@@ -101,7 +101,7 @@ dynamodb_client.create_item(dynamodb_item={
                 "car": "Black Skoda",
             })
 {"statusCode": 200,
-             "message": "Created new item with key: 1482328791"}
+             "body": "Created new item with key: 1482328791"}
 ```
 
 For examples on how to use the modules, please view the tests for the correct format and structures of everything.

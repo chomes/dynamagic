@@ -51,7 +51,7 @@ class TestDynamoDBClient(unittest.TestCase):
                     "car": "Black Skoda",
                 }
             ),
-            {"statusCode": 200, "message": "Created new item with key: 1482328791"},
+            {"statusCode": 200, "body": "Created new item with key: 1482328791"},
         )
 
     @mock_dynamodb2
@@ -72,7 +72,7 @@ class TestDynamoDBClient(unittest.TestCase):
             ),
             {
                 "statusCode": 400,
-                "message": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, please try again",
+                "body": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, please try again",
             },
         )
 
@@ -169,7 +169,7 @@ class TestDynamoDBClient(unittest.TestCase):
             ),
             {
                 "statusCode": 200,
-                "message": f"Item with the key provided has been updated successfully",
+                "body": f"Item with the key provided has been updated successfully",
             },
         )
 
@@ -182,7 +182,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.update_item(dynamodb_attributes={"Test_key": 4828201}),
             {
                 "statusCode": 400,
-                "message": "Key 'CustomerId' was missing from the schema from this data, please try again",
+                "body": "Key 'CustomerId' was missing from the schema from this data, please try again",
             },
         )
 
@@ -205,7 +205,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.fetch_item(key={"CustomerId": "1482328791"}),
             {
                 "statusCode": 200,
-                "message": {
+                "body": {
                     "CustomerId": "1482328791",
                     "name": "James Joseph",
                     "address": "Jeff Bezos Candy land road",
@@ -223,7 +223,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.fetch_item(key={"Test_key": 4820203}),
             {
                 "statusCode": 400,
-                "message": "Key 'CustomerId' was missing from the schema from this data, please try again",
+                "body": "Key 'CustomerId' was missing from the schema from this data, please try again",
             },
         )
 
@@ -255,7 +255,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.fetch_items(),
             {
                 "statusCode": 200,
-                "message": [
+                "body": [
                     {
                         "CustomerId": "1482328791",
                         "name": "James Joseph",
@@ -283,7 +283,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.fetch_items(),
             {
                 "statusCode": 400,
-                "message": "Either the table does not exist or there are no items populated yet, "
+                "body": "Either the table does not exist or there are no items populated yet, "
                 "please check and try again",
             },
         )
@@ -307,7 +307,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.delete_item(key={"CustomerId": "1482328791"}),
             {
                 "statusCode": 200,
-                "message": "Item with key: 1482328791 has been deleted",
+                "body": "Item with key: 1482328791 has been deleted",
             },
         )
 
@@ -321,7 +321,7 @@ class TestDynamoDBClient(unittest.TestCase):
             dynamodb_client.delete_item(key={"CustomerId": "148232879"}),
             {
                 "statusCode": 400,
-                "message": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, "
+                "body": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, "
                 "please try again",
             },
         )
