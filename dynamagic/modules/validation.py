@@ -28,24 +28,24 @@ from dynamagic.modules.exceptions import (
     ValidationWrongSchemaTypeError,
     ValidationWrongKeyError,
     ValidationMissingKeyError,
-    ValidationIncorrectKeyTypeError,
+    ValidationIncorrectKeyTypeError
 )
 
 
 class Validation:
     def __init__(
-        self, table_schema: Union[Dict[str, object], Dict[str, Dict[str, object]]]
+        self, table_schema: Union[Dict[str, type], Dict[str, str]]
     ) -> None:
         self.schema_template = table_schema
         self.key_template = {}
         self.new_item_schema = None
         self.update_item_schema = None
         self.dynamodb_key_schema = None
+        self.dynamodb_format_mapper = None
         self.format_types = {str: "S", int: "N", float: "N",
         bytes: "B", list: "SS", List[int]: "NS",
          List[float]: "NS", List[bytes]: "BS",
          dict: "M", list: "L"}
-        self.dynamodb_format_mapper = None
         self.format_schema()
         self.generate_item_schema()
         self.generate_key_schema()
