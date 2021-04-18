@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="chomes", # Replace with your own username
+    name="dynamagic", # Replace with your own username
     version="1.4",
-    author="James Joseph",
+    author="chomes",
     author_email="jaayjay@gmail.com",
     description="Python client to interfact with dynamodb",
     long_description=long_description,
