@@ -1,5 +1,5 @@
 from dynamagic.modules.validation import Validation
-import schema
+from schema import Schema, And, Use
 from dynamagic.modules.exceptions import (
     ValidationFailedAttributesUpdateError,
     ValidationIncorrectAttributesError,
@@ -38,22 +38,38 @@ class TestValidation(unittest.TestCase):
                 {"CustomerId": str},
             ),
         )
-    
+
     def test_bad_format_schema(self):
         with self.assertRaises(ValidationWrongKeyError):
-            Validation(table_schema={
+            Validation(
+                table_schema={
                     "CustomerId": str,
                     "name": str,
                     "address": str,
                     "age": str,
                     "car": str,
-                })
-    
+                }
+            )
+
     def test_generate_new_item_schema(self):
         validation = Validation(table_schema=self.generate_schema_template())
-        self.assertEqual(validation.new_item_schema, Schema())
-
-
+        self.assertEquals(
+            validation.new_item_schema.json_schema("CustomerId"),
+            {
+                "type": "object",
+                "properties": {
+                    "name": {"allOf": []},
+                    "address": {"allOf": []},
+                    "age": {"allOf": []},
+                    "car": {"allOf": []},
+                    "CustomerId": {"allOf": []},
+                },
+                "required": ["name", "address", "age", "car", "CustomerId"],
+                "additionalProperties": False,
+                "$id": "CustomerId",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+            },
+        )
     def test_creating_validation_class(self):
         validation = Validation(table_schema=self.generate_schema_template())
         self.assertIsInstance(validation, Validation)
