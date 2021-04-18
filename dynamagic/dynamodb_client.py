@@ -12,9 +12,9 @@ from dynamagic.modules.dynamodb_api import DynamodbApi
 
 
 class DynamodbClient(DynamodbApi):
-    def __init__(self, aws_region: str, dynamodb_table: str):
-        super().__init__(aws_region=aws_region, dynamodb_table=dynamodb_table)
-        self.validation = Validation()
+    def __init__(self, dynamodb_table: str, table_schema: Union[Dict[str, type], Dict[str, str]]):
+        super().__init__(dynamodb_table=dynamodb_table)
+        self.validation = Validation(table_schema=table_schema)
         self.client_exceptions: tuple(Exception) = (
             dynamodb_exceptions.DynamoDbWrongKeyError,
             dynamodb_exceptions.ValidationWrongSchemaTypeError,

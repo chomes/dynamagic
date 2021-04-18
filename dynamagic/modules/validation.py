@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 try:
     from schema import (
@@ -33,37 +33,67 @@ from dynamagic.modules.exceptions import (
 
 
 class Validation:
-    def __init__(self) -> None:
+    def __init__(
+        self, table_schema: Union[Dict[str, object], Dict[str, Dict[str, object]]]
+    ) -> None:
+        self.schema_template = table_schema
+        self.key_template = {}
+        self.new_item_schema = None
+        self.update_item_schema = None
+        self.dynamodb_key_schema = None
+        self.format_types = {str: "S", int: "N", float: "N",
+        bytes: "B", list: "SS", List[int]: "NS",
+         List[float]: "NS", List[bytes]: "BS",
+         dict: "M", list: "L"}
+        self.dynamodb_format_mapper = None
+        self.format_schema()
+        self.generate_item_schema()
+        self.generate_key_schema()
+        self.generate_update_item_schema()
+        self.generate_format_mapper()
+
+        
+    def format_schema(self) -> None:
+        try:
+            self.schema_template[
+                self.schema_template["key_name"]
+            ] = self.schema_template["key_type"]
+            self.key_template = {
+                self.schema_template.pop("key_name"): self.schema_template.pop(
+                    "key_type"
+                )
+            }
+        except KeyError as error:
+            raise ValidationWrongKeyError(error) from error
+
+    def generate_item_schema(self) -> None:
         self.new_item_schema = Schema(
             {
-                "CustomerId": And(
-                    Use(str), lambda client_id: len(client_id) == 10 and int(client_id)
-                ),
-                "name": And(Use(str)),
-                "address": And(Use(str)),
-                "age": And(Use(str)),
-                "car": And(Use(str)),
+                attribute: And(Use(data_type))
+                for attribute, data_type in self.schema_template.items()
             }
         )
+
+    def generate_key_schema(self) -> None:
+        self.dynamodb_key_schema = Schema(
+            {
+                attribute: And(Use(data_type))
+                for attribute, data_type in self.key_template.items()
+            }
+        )
+
+    def generate_update_item_schema(self) -> None:
         self.update_item_schema = Schema(
             {
-                "CustomerId": And(Use(str), lambda client_id: len(client_id) == 10),
-                Optional("name"): And(Use(str)),
-                Optional("address"): And(Use(str)),
-                Optional("age"): And(Use(str)),
-                Optional("car"): And(Use(str)),
+                Optional(attribute)
+                if attribute not in self.key_template
+                else attribute: And(Use(data_type))
+                for attribute, data_type in self.schema_template.items()
             }
         )
-        self.dynamodb_format_mapper = {
-            "CustomerId": {"dynamodb_type": "S"},
-            "name": {"dynamodb_type": "S"},
-            "address": {"dynamodb_type": "S"},
-            "age": {"dynamodb_type": "S"},
-            "car": {"dynamodb_type": "S"},
-        }
-        self.dynamodb_key_schema = Schema(
-            {"CustomerId": And(Use(str), lambda client_id: len(client_id) == 10)}
-        )
+
+    def generate_format_mapper(self) -> None:
+        self.dynamodb_format_mapper = {attribute: {"dynamodb_type": self.format_types[data_type]} for attribute, data_type in self.schema_template.items()}
 
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
         if validation_type == "new_item":

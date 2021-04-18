@@ -6,6 +6,13 @@ This is kept as minimal as possible due to the fact that it will be used in a la
 
 We recommend python 3.8 and above but it **should** run on python 3.6 at a minimum. See requirements.txt for packages (Not all of those are required)
 
+
+## Notice
+
+I am currently working on changing over to autogenerate your own schema so you do not have to change any code.  For the most part this is now done except for attribute_expression data in dynamodb_api.py
+This should be finished soon but for now please use the latest stable release in version until a new version is released.
+
+
 ## What is included in the programme
 
 - Tests for each method
@@ -81,13 +88,23 @@ export AWS_SECRET_ACCESS_KEY=ACCESS_KEY
 export AWS_DEFAULT_REGION=eu-west-2
 ```
 
-Once done you then need to instantiate the class
+Once done you then need to instantiate the class with the table and a schema to validate the data you're putting in. The schema should be a dict with key value pairs.
+
+The keys should be the names of the attributes and the values should be the data types you want to use. See the validation module for the supported types we support.
+
+For the table key please use the following attributes:
+
+"key_name" - The name of the key
+"key_type" - The type used for the key
+
+An example
 
 ```python
 from dynamagic.dynamodb_client.py import DynamodbClient
 
-dynamodb_client: DynamodbClient = DynamodbClient(aws_region="eu-west-2",
-dynamodb_table="Accounts")
+dynamodb_client: DynamodbClient = DynamodbClient(
+dynamodb_table="Accounts", table_schema={"key_name": "CustomerId",
+    "key_type": str, "name": str, "address": str, "age": str, "car": str})
 ```
 
 Now you can create items on this table
@@ -105,23 +122,6 @@ dynamodb_client.create_item(dynamodb_item={
 ```
 
 For examples on how to use the modules, please view the tests for the correct format and structures of everything.
-
-## Customising your schema and data
-
-If you want different fields then what we have set (Hopefully you do, these are just place holders :) ) edit the modules/validation.py file dynamodb_client.py
-
-### Schemas
-
-- new_item_schema
-- update_item_schema
-- dynamodb_key_schema
-
-Please change these to have your key and attributes you want to support. I have set the schema to be based on a string that checks if it's an int and also if the string is 10 characters long. This is based off of the [schema module](https://pypi.org/project/schema/)
-
-### Format
-
-In the validation module you'll see a var called dynamodb_format_mapper
-This is dict of dicts that has the format for how items should be added into the database. Please check this to your attributes that you want to support and the correct format based on dynamodb's standard for examples see boto3's put item for attribute formats [here](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.put_item)
 
 ### Key vars
 

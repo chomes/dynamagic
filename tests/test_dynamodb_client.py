@@ -4,8 +4,28 @@ from dynamagic.dynamodb_client import DynamodbClient
 from dynamagic.modules.exceptions import ValidationFailedAttributesUpdateError
 import unittest
 
+schema_template = {
+    "key_name": "CustomerId",
+    "key_type": str,
+    "name": str,
+    "address": str,
+    "age": str,
+    "car": str,
+}
+
 
 class TestDynamoDBClient(unittest.TestCase):
+    @staticmethod
+    def generate_schema_template():
+        return {
+            "key_name": "CustomerId",
+            "key_type": str,
+            "name": str,
+            "address": str,
+            "age": str,
+            "car": str,
+        }
+
     @staticmethod
     @mock_dynamodb2
     def create_table():
@@ -25,7 +45,7 @@ class TestDynamoDBClient(unittest.TestCase):
 
     def test_validate_data(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_client.validate_data(
@@ -38,7 +58,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_create_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         self.assertEqual(
@@ -57,14 +77,13 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_failing_creating_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         self.assertEqual(
             dynamodb_client.create_item(
                 dynamodb_item={
                     "CustomerId": "148232879",
-                    "name": "James Joseph",
                     "address": "Jeff Bezos Candy land road",
                     "age": "32",
                     "car": "Black Skoda",
@@ -72,14 +91,14 @@ class TestDynamoDBClient(unittest.TestCase):
             ),
             {
                 "statusCode": 400,
-                "body": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, please try again",
+                "body": f"Key 'name' was missing from the schema from this data, please try again",
             },
         )
 
     @mock_dynamodb2
     def test_delete_existing_attributes(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         dynamodb_client.create_item(
@@ -105,7 +124,7 @@ class TestDynamoDBClient(unittest.TestCase):
 
     def test_generating_expressions(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_client.generate_expressions(
@@ -123,7 +142,7 @@ class TestDynamoDBClient(unittest.TestCase):
 
     def test_confirm_item_updated(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertTrue(
             dynamodb_client.confirm_item_updated(
@@ -136,7 +155,7 @@ class TestDynamoDBClient(unittest.TestCase):
 
     def test_confirm_item_raising_exception(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         with self.assertRaises(ValidationFailedAttributesUpdateError):
             dynamodb_client.confirm_item_updated(
@@ -147,7 +166,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_update_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         dynamodb_client.create_item(
@@ -169,14 +188,14 @@ class TestDynamoDBClient(unittest.TestCase):
             ),
             {
                 "statusCode": 200,
-                "body": f"Item with the key provided has been updated successfully",
+                "body": "Item with the key provided has been updated successfully",
             },
         )
 
     @mock_dynamodb2
     def test_failing_update_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_client.update_item(dynamodb_attributes={"Test_key": 4828201}),
@@ -189,7 +208,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_fetching_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         dynamodb_client.create_item(
@@ -217,7 +236,7 @@ class TestDynamoDBClient(unittest.TestCase):
 
     def test_failing_to_fetch_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_client.fetch_item(key={"Test_key": 4820203}),
@@ -230,7 +249,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_fetch_items(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         dynamodb_client.create_item(
@@ -277,7 +296,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_failing_to_fetch_items(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_client.fetch_items(),
@@ -291,7 +310,7 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_deleting_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         dynamodb_client.create_item(
@@ -314,15 +333,14 @@ class TestDynamoDBClient(unittest.TestCase):
     @mock_dynamodb2
     def test_failing_to_delete_item(self):
         dynamodb_client: DynamodbClient = DynamodbClient(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table", table_schema=self.generate_schema_template()
         )
         self.create_table()
         self.assertEqual(
-            dynamodb_client.delete_item(key={"CustomerId": "148232879"}),
+            dynamodb_client.delete_item(key={"Name": "148232879"}),
             {
                 "statusCode": 400,
-                "body": "DynamoDb Key 'CustomerId' is either not 10 characters long or cannot convert to an int, "
-                "please try again",
+                "body": "Key 'CustomerId' was missing from the schema from this data, please try again",
             },
         )
 

@@ -32,7 +32,7 @@ class TestDynamodbApi(unittest.TestCase):
     def test_create_item(self):
         self.create_table()
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertTrue(
             dynamodb_api.add_item(
@@ -50,7 +50,7 @@ class TestDynamodbApi(unittest.TestCase):
     def test_failing_to_create_item(self):
         self.create_table()
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         with self.assertRaises(DynamoDbWrongKeyError):
             dynamodb_api.add_item(
@@ -64,7 +64,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_remove_duplicate_attributes(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertEqual(
             dynamodb_api.remove_duplicated_attributes(
@@ -76,7 +76,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_remove_duplicate_attributes_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -91,7 +91,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_remove_all_duplicate_attributes(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertEqual(
             dynamodb_api.remove_duplicated_attributes(
@@ -103,7 +103,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_update_expression(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertEqual(
             dynamodb_api.generate_update_expression(
@@ -114,7 +114,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_update_expression_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -128,7 +128,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_expression_attribute_names(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertEqual(
             dynamodb_api.generate_expression_attribute_names(
@@ -139,7 +139,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_expression_attribute_names_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -153,7 +153,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_expression_attribute_values(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertEqual(
             dynamodb_api.generate_expression_attribute_values(
@@ -171,7 +171,7 @@ class TestDynamodbApi(unittest.TestCase):
 
     def test_generate_expression_attribute_values_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -193,7 +193,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_push_update(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         client = boto3.client("dynamodb", region_name="eu-west-2")
@@ -223,7 +223,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_get_item(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         client = boto3.client("dynamodb", region_name="eu-west-2")
@@ -251,7 +251,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_get_invalid_item(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         with self.assertRaises(DynamoDbWrongKeyError):
@@ -260,7 +260,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_get_items(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         client = boto3.client("dynamodb", region_name="eu-west-2")
@@ -307,7 +307,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_failing_to_get_items(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         with self.assertRaises(DynamoDbInvalidTableError):
             dynamodb_api.get_items()
@@ -315,7 +315,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_delete_item(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         client = boto3.client("dynamodb", region_name="eu-west-2")
@@ -348,7 +348,7 @@ class TestDynamodbApi(unittest.TestCase):
     @mock_dynamodb2
     def test_failing_to_delete_item(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
-            aws_region="eu-west-2", dynamodb_table="test_table"
+            dynamodb_table="test_table"
         )
         self.create_table()
         client = boto3.client("dynamodb", region_name="eu-west-2")

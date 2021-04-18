@@ -10,9 +10,8 @@ from dynamagic.modules.exceptions import (
 
 
 class DynamodbApi:
-    def __init__(self, aws_region: str, dynamodb_table: str) -> None:
-        self.aws_region = aws_region
-        self.client = boto3.client("dynamodb", region_name=aws_region)
+    def __init__(self, dynamodb_table: str) -> None:
+        self.client = boto3.client("dynamodb")
         self.dynamodb_table = dynamodb_table
         self.expression_mapping: Dict[str, Dict[str, str]] = {
             "name": {
