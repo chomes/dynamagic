@@ -103,6 +103,15 @@ class Validation:
             for attribute, data_type in self.schema_template.items()
         }
 
+    def generate_expression_mapper(self) -> None:
+        # seperate function to recursively check keys in template
+        # loop through schema_template
+        # if keys is false increase split of expression until the full word is used
+        # else use just the first letter of the word
+        # generate expression mapper dict
+
+        pass
+
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
         if validation_type == "new_item":
             return self.new_item_schema
