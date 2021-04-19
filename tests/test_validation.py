@@ -1,5 +1,5 @@
 from dynamagic.modules.validation import Validation
-from schema import Schema, And, Use
+from schema import Schema, And, Use, Optional
 from dynamagic.modules.exceptions import (
     ValidationFailedAttributesUpdateError,
     ValidationIncorrectAttributesError,
@@ -53,23 +53,54 @@ class TestValidation(unittest.TestCase):
 
     def test_generate_new_item_schema(self):
         validation = Validation(table_schema=self.generate_schema_template())
-        self.assertEquals(
+        self.assertEqual(
             validation.new_item_schema.json_schema("CustomerId"),
+            Schema(
+                {
+                    "name": And(Use(str)),
+                    "address": And(Use(str)),
+                    "age": And(Use(str)),
+                    "car": And(Use(str)),
+                    "CustomerId": (And(Use(str))),
+                }
+            ).json_schema("CustomerId"),
+        )
+
+    def test_generate_key_schema(self):
+        validation = Validation(table_schema=self.generate_schema_template())
+        self.assertEqual(
+            validation.dynamodb_key_schema.json_schema("CustomerId"),
+            Schema({"CustomerId": And(Use(str))}).json_schema("CustomerId"),
+        )
+
+    def test_generate_update_schema(self):
+        validation = Validation(table_schema=self.generate_schema_template())
+        self.assertEqual(
+            validation.update_item_schema.json_schema("CustomerId"),
+            Schema(
+                {
+                    Optional("name"): And(Use(str)),
+                    Optional("address"): And(Use(str)),
+                    Optional("age"): And(Use(str)),
+                    Optional("car"): And(Use(str)),
+                    "CustomerId": (And(Use(str))),
+                }
+            ).json_schema("CustomerId"),
+        )
+
+    def test_generate_format_mapper(self):
+        validation = Validation(table_schema=self.generate_schema_template())
+        self.assertEqual(
+            validation.dynamodb_format_mapper,
             {
-                "type": "object",
-                "properties": {
-                    "name": {"allOf": []},
-                    "address": {"allOf": []},
-                    "age": {"allOf": []},
-                    "car": {"allOf": []},
-                    "CustomerId": {"allOf": []},
-                },
-                "required": ["name", "address", "age", "car", "CustomerId"],
-                "additionalProperties": False,
-                "$id": "CustomerId",
-                "$schema": "http://json-schema.org/draft-07/schema#",
+                "name": {"dynamodb_type": "S"},
+                "address": {"dynamodb_type": "S"},
+                "age": {"dynamodb_type": "S"},
+                "car": {"dynamodb_type": "S"},
+                "CustomerId": {"dynamodb_type": "S"},
             },
         )
+
     def test_creating_validation_class(self):
         validation = Validation(table_schema=self.generate_schema_template())
         self.assertIsInstance(validation, Validation)

@@ -28,31 +28,36 @@ from dynamagic.modules.exceptions import (
     ValidationWrongSchemaTypeError,
     ValidationWrongKeyError,
     ValidationMissingKeyError,
-    ValidationIncorrectKeyTypeError
+    ValidationIncorrectKeyTypeError,
 )
 
 
 class Validation:
-    def __init__(
-        self, table_schema: Union[Dict[str, type], Dict[str, str]]
-    ) -> None:
+    def __init__(self, table_schema: Union[Dict[str, type], Dict[str, str]]) -> None:
         self.schema_template = table_schema
         self.key_template = {}
         self.new_item_schema = None
         self.update_item_schema = None
         self.dynamodb_key_schema = None
         self.dynamodb_format_mapper = None
-        self.format_types = {str: "S", int: "N", float: "N",
-        bytes: "B", list: "SS", List[int]: "NS",
-         List[float]: "NS", List[bytes]: "BS",
-         dict: "M", list: "L"}
+        self.format_types = {
+            str: "S",
+            int: "N",
+            float: "N",
+            bytes: "B",
+            list: "SS",
+            List[int]: "NS",
+            List[float]: "NS",
+            List[bytes]: "BS",
+            dict: "M",
+            list: "L",
+        }
         self.format_schema()
         self.generate_item_schema()
         self.generate_key_schema()
         self.generate_update_item_schema()
         self.generate_format_mapper()
 
-        
     def format_schema(self) -> None:
         try:
             self.schema_template[
@@ -93,7 +98,10 @@ class Validation:
         )
 
     def generate_format_mapper(self) -> None:
-        self.dynamodb_format_mapper = {attribute: {"dynamodb_type": self.format_types[data_type]} for attribute, data_type in self.schema_template.items()}
+        self.dynamodb_format_mapper = {
+            attribute: {"dynamodb_type": self.format_types[data_type]}
+            for attribute, data_type in self.schema_template.items()
+        }
 
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
         if validation_type == "new_item":
