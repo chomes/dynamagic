@@ -13,24 +13,7 @@ class DynamodbApi:
     def __init__(self, dynamodb_table: str) -> None:
         self.client = boto3.client("dynamodb")
         self.dynamodb_table = dynamodb_table
-        self.expression_mapping: Dict[str, Dict[str, str]] = {
-            "name": {
-                "expression_attribute_name": "#N",
-                "expression_attribute_var": ":n",
-            },
-            "address": {
-                "expression_attribute_name": "#AD",
-                "expression_attribute_var": ":ad",
-            },
-            "age": {
-                "expression_attribute_name": "#AG",
-                "expression_attribute_var": ":ag",
-            },
-            "car": {
-                "expression_attribute_name": "#C",
-                "expression_attribute_var": ":c",
-            },
-        }
+
 
     def add_item(
         self, dynamodb_item: Dict[str, Dict[str, str]]
