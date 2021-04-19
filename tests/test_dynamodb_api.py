@@ -1,4 +1,5 @@
 from dynamagic.modules.dynamodb_api import DynamodbApi
+from dynamagic.modules.validation import Validation
 from dynamagic.modules.exceptions import (
     DynamoDbInvalidTableError,
     DynamoDbWrongKeyError,
@@ -11,6 +12,18 @@ import unittest
 
 
 class TestDynamodbApi(unittest.TestCase):
+    @staticmethod
+    def generate_schema_template():
+        return {
+            "key_name": "CustomerId",
+            "key_type": str,
+            "name": str,
+            "address": str,
+            "age": str,
+            "car": str,
+        }
+
+
     @staticmethod
     @mock_dynamodb2
     def create_table():
@@ -105,16 +118,22 @@ class TestDynamodbApi(unittest.TestCase):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
         )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
+        )
         self.assertEqual(
             dynamodb_api.generate_update_expression(
-                new_attributes={"address": "Rochet trust drive", "age": "35"}
-            ),
-            "SET #AD = :ad, #AG = :ag",
+                new_attributes={"address": "Rochet trust drive", "age": "35"},
+            expression_mapping=validation.expression_mapping),
+            "SET #A = :a, #G = :g",
         )
 
     def test_generate_update_expression_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
+        )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -123,23 +142,29 @@ class TestDynamodbApi(unittest.TestCase):
                 "address": "Rochet trust drive",
                 "age": "35",
                 "comic": "Batman",
-            },
+            }, expression_mapping=validation.expression_mapping
         )
 
     def test_generate_expression_attribute_names(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
         )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
+        )
         self.assertEqual(
             dynamodb_api.generate_expression_attribute_names(
-                new_attributes={"address": "Rochet trust drive", "age": "35"}
-            ),
-            {"#AD": "address", "#AG": "age"},
+                new_attributes={"address": "Rochet trust drive", "age": "35"},
+            expression_mapping=validation.expression_mapping),
+            {"#A": "address", "#G": "age"},
         )
 
     def test_generate_expression_attribute_names_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
+        )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -148,12 +173,15 @@ class TestDynamodbApi(unittest.TestCase):
                 "address": "Rochet trust drive",
                 "age": "35",
                 "comic": "Batman",
-            },
+            }, expression_mapping=validation.expression_mapping
         )
 
     def test_generate_expression_attribute_values(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
+        )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
         )
         self.assertEqual(
             dynamodb_api.generate_expression_attribute_values(
@@ -165,13 +193,16 @@ class TestDynamodbApi(unittest.TestCase):
                     "age": {"dynamodb_type": "S"},
                     "car": {"dynamodb_type": "S"},
                 },
-            ),
-            {":ad": {"S": "Rochet trust drive"}, ":ag": {"S": "35"}},
+            expression_mapping=validation.expression_mapping),
+            {":a": {"S": "Rochet trust drive"}, ":g": {"S": "35"}},
         )
 
     def test_generate_expression_attribute_values_with_wrong_key(self):
         dynamodb_api: DynamodbApi = DynamodbApi(
             dynamodb_table="test_table"
+        )
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
         )
         self.assertRaises(
             ValidationIncorrectAttributeError,
@@ -187,7 +218,7 @@ class TestDynamodbApi(unittest.TestCase):
                 "address": {"dynamodb_type": "S"},
                 "age": {"dynamodb_type": "S"},
                 "car": {"dynamodb_type": "S"},
-            },
+            }, expression_mapping=validation.expression_mapping
         )
 
     @mock_dynamodb2

@@ -40,6 +40,7 @@ class Validation:
         self.update_item_schema = None
         self.dynamodb_key_schema = None
         self.dynamodb_format_mapper = None
+        self.expression_mapping = dict()
         self.format_types = {
             str: "S",
             int: "N",
@@ -57,6 +58,7 @@ class Validation:
         self.generate_key_schema()
         self.generate_update_item_schema()
         self.generate_format_mapper()
+        self.generate_expression_mapper()
 
     def format_schema(self) -> None:
         try:
@@ -103,14 +105,32 @@ class Validation:
             for attribute, data_type in self.schema_template.items()
         }
 
-    def generate_expression_mapper(self) -> None:
-        # seperate function to recursively check keys in template
-        # loop through schema_template
-        # if keys is false increase split of expression until the full word is used
-        # else use just the first letter of the word
-        # generate expression mapper dict
 
-        pass
+    def expression_selection(self, attribute: str) -> Dict[str, str]:
+        new_expression = dict()
+        attribute_names = list(self.expression_mapping.keys())
+        attribute_vars = [self.expression_mapping[attribute]["expression_attribute_var"] for attribute in attribute_names]
+        for index in range(0, len(attribute)):
+            print(attribute[index])
+            if f":{attribute[index]}".lower() not in attribute_vars:
+                new_expression = {
+                    "expression_attribute_name": f"#{attribute[index]}".upper(),
+                    "expression_attribute_var": f":{attribute[index]}".lower()
+                }
+                break
+            elif f":{attribute[:index + 1]}".lower() not in attribute_vars:
+                new_expression = {
+                    "expression_attribute_name": f"#{attribute[:index + 1]}".upper(),
+                    "expression_attribute_var": f":{attribute[:index + 1]}".lower()
+                }
+                break
+
+        return new_expression
+
+
+    def generate_expression_mapper(self) -> None:
+        for attribute in self.schema_template.keys():
+            self.expression_mapping[attribute] = self.expression_selection(attribute=attribute)
 
     def validation_schema(self, validation_type: str) -> Union[Schema, Exception]:
         if validation_type == "new_item":

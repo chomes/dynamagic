@@ -132,6 +132,46 @@ class TestValidation(unittest.TestCase):
             validation.dynamodb_key_schema,
         )
 
+    def test_expression_selection(self):
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
+        )
+        self.assertEqual(
+            validation.expression_selection(attribute="CustomerId"),
+            {"expression_attribute_name": "#CU", "expression_attribute_var": ":cu"},
+        )
+
+    def test_expression_expression_mapper(self):
+        validation: Validation = Validation(
+            table_schema=self.generate_schema_template()
+        )
+        validation.generate_expression_mapper()
+        self.assertEqual(
+            validation.expression_mapping,
+            {
+                "name": {
+                    "expression_attribute_name": "#NA",
+                    "expression_attribute_var": ":na",
+                },
+                "address": {
+                    "expression_attribute_name": "#D",
+                    "expression_attribute_var": ":d",
+                },
+                "age": {
+                    "expression_attribute_name": "#A",
+                    "expression_attribute_var": ":a",
+                },
+                "car": {
+                    "expression_attribute_name": "#CA",
+                    "expression_attribute_var": ":ca",
+                },
+                "CustomerId": {
+                    "expression_attribute_name": "#C",
+                    "expression_attribute_var": ":c",
+                },
+            },
+        )
+
     def test_failed_to_grab_validation_Schema(self):
         validation: Validation = Validation(
             table_schema=self.generate_schema_template()

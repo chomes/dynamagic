@@ -131,11 +131,11 @@ class TestDynamoDBClient(unittest.TestCase):
                 confirmed_new_attributes={"address": "Foreign road", "age": "42"}
             ),
             (
-                "SET #AD = :ad, #AG = :ag",
-                {"#AD": "address", "#AG": "age"},
+                "SET #A = :a, #G = :g",
+                {"#A": "address", "#G": "age"},
                 {
-                    ":ad": {"S": "Foreign road"},
-                    ":ag": {"S": "42"},
+                    ":a": {"S": "Foreign road"},
+                    ":g": {"S": "42"},
                 },
             ),
         )

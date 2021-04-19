@@ -60,34 +60,36 @@ class DynamodbApi:
         except KeyError as error:
             raise ValidationIncorrectAttributeError(data=error) from error
 
+    @staticmethod
     def generate_update_expression(
-        self, new_attributes: Dict[str, str]
-    ) -> Union[str, Exception]:
+        new_attributes: Dict[str, str],
+    expression_mapping: Dict[str, Dict[str, str]]) -> Union[str, Exception]:
         update_expression = str()
         try:
             for attribute in new_attributes.keys():
                 if update_expression.startswith("SET"):
                     pass
                 else:
-                    update_expression = f"SET {self.expression_mapping[attribute]['expression_attribute_name']} = {self.expression_mapping[attribute]['expression_attribute_var']}"
+                    update_expression = f"SET {expression_mapping[attribute]['expression_attribute_name']} = {expression_mapping[attribute]['expression_attribute_var']}"
 
                 if update_expression.endswith(
-                    self.expression_mapping[attribute]["expression_attribute_var"]
+                    expression_mapping[attribute]["expression_attribute_var"]
                 ):
                     continue
                 else:
-                    update_expression += f", {self.expression_mapping[attribute]['expression_attribute_name']} = {self.expression_mapping[attribute]['expression_attribute_var']}"
+                    update_expression += f", {expression_mapping[attribute]['expression_attribute_name']} = {expression_mapping[attribute]['expression_attribute_var']}"
 
             return update_expression
         except KeyError as error:
             raise ValidationIncorrectAttributeError(data=error) from error
 
+    @staticmethod
     def generate_expression_attribute_names(
-        self, new_attributes: Dict[str, str]
-    ) -> Union[Dict[str, str], Exception]:
+        new_attributes: Dict[str, str],
+    expression_mapping: Dict[str, Dict[str, str]]) -> Union[Dict[str, str], Exception]:
         try:
             return {
-                self.expression_mapping[attribute][
+                expression_mapping[attribute][
                     "expression_attribute_name"
                 ]: attribute
                 for attribute in new_attributes.keys()
@@ -95,11 +97,11 @@ class DynamodbApi:
         except KeyError as error:
             raise ValidationIncorrectAttributeError(data=error) from error
 
+    @staticmethod
     def generate_expression_attribute_values(
-        self,
         new_attributes: Dict[str, str],
         dynamodb_validation_format_mapper: Dict[str, Dict[str, str]],
-    ) -> Union[Dict[str, Dict[str, str]], Exception]:
+    expression_mapping: Dict[str, Dict[str, str]]) -> Union[Dict[str, Dict[str, str]], Exception]:
         """Generate a dict with expression attribute values to be used to update the item
 
         Args:
@@ -112,7 +114,7 @@ class DynamodbApi:
         """
         try:
             return {
-                self.expression_mapping[attribute]["expression_attribute_var"]: {
+                expression_mapping[attribute]["expression_attribute_var"]: {
                     dynamodb_validation_format_mapper[attribute]["dynamodb_type"]: value
                 }
                 for attribute, value in new_attributes.items()

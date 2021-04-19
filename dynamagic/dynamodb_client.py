@@ -105,18 +105,21 @@ class DynamodbClient(DynamodbApi):
             Tuple[str, Dict[str, str]]: Returns the update_expression string, attribute_names and attribute_values
         """
         update_expression: str = self.generate_update_expression(
-            new_attributes=confirmed_new_attributes
+            new_attributes=confirmed_new_attributes,
+            expression_mapping=self.validation.expression_mapping
         )
         expression_attribute_names: Dict[
             str, str
         ] = self.generate_expression_attribute_names(
-            new_attributes=confirmed_new_attributes
+            new_attributes=confirmed_new_attributes,
+            expression_mapping=self.validation.expression_mapping
         )
         expression_attribute_values: Dict[
             str, str
         ] = self.generate_expression_attribute_values(
             new_attributes=confirmed_new_attributes,
             dynamodb_validation_format_mapper=self.validation.dynamodb_format_mapper,
+            expression_mapping=self.validation.expression_mapping
         )
         return (
             update_expression,
