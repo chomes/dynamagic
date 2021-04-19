@@ -7,12 +7,6 @@ This is kept as minimal as possible due to the fact that it will be used in a la
 We recommend python 3.8 and above but it **should** run on python 3.6 at a minimum. See requirements.txt for packages (Not all of those are required)
 
 
-## Notice
-
-I am currently working on changing over to autogenerate your own schema so you do not have to change any code.  For the most part this is now done except for attribute_expression data in dynamodb_api.py
-This should be finished soon but for now please use the latest stable release in version until a new version is released.
-
-
 ## What is included in the programme
 
 - Tests for each method
@@ -122,10 +116,6 @@ dynamodb_client.create_item(dynamodb_item={
 ```
 
 For examples on how to use the modules, please view the tests for the correct format and structures of everything.
-
-### Key vars
-
-In the dynamodb_client.py file I have used the key name from the standard a few times, you will need to replace CustomerId with your own key otherwise this will fail.
 
 ## Raising bugs / Feature requests
 
