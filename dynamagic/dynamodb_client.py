@@ -12,7 +12,9 @@ from dynamagic.modules.dynamodb_api import DynamodbApi
 
 
 class DynamodbClient(DynamodbApi):
-    def __init__(self, dynamodb_table: str, table_schema: Union[Dict[str, type], Dict[str, str]]):
+    def __init__(
+        self, dynamodb_table: str, table_schema: Union[Dict[str, type], Dict[str, str]]
+    ):
         super().__init__(dynamodb_table=dynamodb_table)
         self.validation = Validation(table_schema=table_schema)
         self.client_exceptions: tuple(Exception) = (
@@ -65,7 +67,7 @@ class DynamodbClient(DynamodbApi):
             self.add_item(dynamodb_item=formated_db_item)
             return {
                 "statusCode": 200,
-                "body": f"Created new item with key: {validated_item['CustomerId']}",
+                "body": f"Created new item with key: {validated_item[list(self.validation.key_template.keys())[0]]}",
             }
         except self.client_exceptions as error:
             return {"statusCode": 400, "body": str(error)}
@@ -106,20 +108,20 @@ class DynamodbClient(DynamodbApi):
         """
         update_expression: str = self.generate_update_expression(
             new_attributes=confirmed_new_attributes,
-            expression_mapping=self.validation.expression_mapping
+            expression_mapping=self.validation.expression_mapping,
         )
         expression_attribute_names: Dict[
             str, str
         ] = self.generate_expression_attribute_names(
             new_attributes=confirmed_new_attributes,
-            expression_mapping=self.validation.expression_mapping
+            expression_mapping=self.validation.expression_mapping,
         )
         expression_attribute_values: Dict[
             str, str
         ] = self.generate_expression_attribute_values(
             new_attributes=confirmed_new_attributes,
             dynamodb_validation_format_mapper=self.validation.dynamodb_format_mapper,
-            expression_mapping=self.validation.expression_mapping
+            expression_mapping=self.validation.expression_mapping,
         )
         return (
             update_expression,
@@ -165,7 +167,13 @@ class DynamodbClient(DynamodbApi):
                 validation_type="update_item", unvalidated_data=dynamodb_attributes
             )
             key: Dict[str, Dict[str, str]] = self.validation.validate_item_to_db_format(
-                dynamodb_item={"CustomerId": validated_attributes.pop("CustomerId")}
+                dynamodb_item={
+                    list(self.validation.key_template.keys())[
+                        0
+                    ]: validated_attributes.pop(
+                        list(self.validation.key_template.keys())[0]
+                    )
+                }
             )
             removed_duplicated_attributes: Dict[
                 str, str
@@ -262,7 +270,7 @@ class DynamodbClient(DynamodbApi):
             self.remove_item(key=formated_key)
             return {
                 "statusCode": 200,
-                "body": f"Item with key: {validated_key['CustomerId']} has been deleted",
+                "body": f"Item with key: {validated_key[list(self.validation.key_template.keys())[0]]} has been deleted",
             }
         except self.client_exceptions as error:
             return {"statusCode": 400, "body": str(error)}
