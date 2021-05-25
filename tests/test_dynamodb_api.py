@@ -125,7 +125,7 @@ class TestDynamodbApi(unittest.TestCase):
             dynamodb_api.generate_update_expression(
                 new_attributes={"address": "Rochet trust drive", "age": "35"},
             expression_mapping=validation.expression_mapping),
-            "SET #A = :a, #G = :g",
+            "SET #A = :a, #AG = :ag",
         )
 
     def test_generate_update_expression_with_wrong_key(self):
@@ -156,7 +156,7 @@ class TestDynamodbApi(unittest.TestCase):
             dynamodb_api.generate_expression_attribute_names(
                 new_attributes={"address": "Rochet trust drive", "age": "35"},
             expression_mapping=validation.expression_mapping),
-            {"#A": "address", "#G": "age"},
+            {"#A": "address", "#AG": "age"},
         )
 
     def test_generate_expression_attribute_names_with_wrong_key(self):
@@ -194,7 +194,7 @@ class TestDynamodbApi(unittest.TestCase):
                     "car": {"dynamodb_type": "S"},
                 },
             expression_mapping=validation.expression_mapping),
-            {":a": {"S": "Rochet trust drive"}, ":g": {"S": "35"}},
+            {":a": {"S": "Rochet trust drive"}, ":ag": {"S": "35"}},
         )
 
     def test_generate_expression_attribute_values_with_wrong_key(self):

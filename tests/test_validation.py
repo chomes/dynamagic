@@ -138,7 +138,7 @@ class TestValidation(unittest.TestCase):
         )
         self.assertEqual(
             validation.expression_selection(attribute="CustomerId"),
-            {"expression_attribute_name": "#CU", "expression_attribute_var": ":cu"},
+            {"expression_attribute_name": "#U", "expression_attribute_var": ":u"},
         )
 
     def test_expression_expression_mapper(self):
@@ -154,8 +154,8 @@ class TestValidation(unittest.TestCase):
                     "expression_attribute_var": ":na",
                 },
                 "address": {
-                    "expression_attribute_name": "#D",
-                    "expression_attribute_var": ":d",
+                    "expression_attribute_name": "#AD",
+                    "expression_attribute_var": ":ad",
                 },
                 "age": {
                     "expression_attribute_name": "#A",

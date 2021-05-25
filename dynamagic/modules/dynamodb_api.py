@@ -1,6 +1,7 @@
 from botocore.exceptions import ParamValidationError
 from typing import Dict, List, Union
 import boto3
+import os
 from dynamagic.modules.exceptions import (
     DynamoDbWrongKeyError,
     ValidationIncorrectAttributeError,
@@ -11,7 +12,8 @@ from dynamagic.modules.exceptions import (
 
 class DynamodbApi:
     def __init__(self, dynamodb_table: str) -> None:
-        self.client = boto3.client("dynamodb")
+        self.client = boto3.client("dynamodb",
+        region_name=os.environ.get("AWS_DEFAULT_REGION") if os.environ.get("AWS_DEFAULT_REGION") else "eu-west-2")
         self.dynamodb_table = dynamodb_table
 
 
